@@ -49,8 +49,7 @@ export default function InvestorPortal() {
   let outstandingLoan = 0;
   let totalPrincipalRepaid = 0;
   let totalInterestPaid = 0;
-  let nextDueDate = null;
-
+  let nextDueDate: Date | null = null;
   data.loans.forEach((loan: any) => {
     totalLoan += loan.principalAmount;
     
