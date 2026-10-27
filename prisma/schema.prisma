@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+   provider = "postgresql"
+}
+
+model User {
+  id               String   @id @default(cuid())
+  name             String
+  email            String   @unique
+  phone            String?  @unique // <-- ADD THIS
+  passwordHash     String
+  role             String   // "admin", "user", "investor"
+  status           String   @default("active") 
+  forcePasswordReset Boolean @default(false) 
+  lastPasswordChange DateTime @default(now()) 
+  language         String   @default("en")
+  createdAt        DateTime @default(now())
+  
+  investor         Investor?
+}
+
+model Investor {
+  id          String   @id @default(cuid())
+  code        String?  @unique
+  userId      String?  @unique
+  name        String
+  phone       String   @unique
+  email       String?
+  address     String?
+  idProof     String?
+  nominee     String?
+  joinDate    DateTime @default(now())
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id])
+
+  investments         Investment[]
+  withdrawals         Withdrawal[]
+  loans               Loan[]
+  profitDistributions ProfitDistribution[]
+}
+
+model Investment {
+  id           String   @id @default(cuid())
+  investorId   String
+  amount       Float
+  date         DateTime @default(now())
+  type         String
+  sourceLoanId String?
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  investor     Investor @relation(fields: [investorId], references: [id])
+}
+
+model Withdrawal {
+  id         String   @id @default(cuid())
+  investorId String
+  amount     Float
+  date       DateTime @default(now())
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  investor   Investor @relation(fields: [investorId], references: [id])
+}
+
+model Loan {
+  id              String   @id @default(cuid())
+  code            String?  @unique
+  investorId      String
+  principalAmount Float
+  termAmount      Float
+  startDate       DateTime @default(now())
+  status          String   @default("active")
+  createdAt       DateTime @default(now())
+
+  investor        Investor       @relation(fields: [investorId], references: [id])
+  schedule        LoanSchedule[]
+  repayments      Repayment[]
+}
+
+model LoanSchedule {
+  id               String   @id @default(cuid())
+  loanId           String
+  cycleId          String?
+  monthNo          Int
+  dueDate          DateTime
+  openingPrincipal Float
+  interestAmount   Float
+  termAmount       Float
+  extra1000        Float    @default(1000)
+  extraRepayment   Float    @default(0)
+  closingPrincipal Float
+  status           String   @default("pending")
+
+  loan             Loan     @relation(fields: [loanId], references: [id])
+}
+
+model Repayment {
+  id            String   @id @default(cuid())
+  loanId        String
+  scheduleId    String?
+  paidDate      DateTime @default(now())
+  amountPaid    Float
+  principalPart Float
+  interestPart  Float
+  extra1000Part Float
+  notes         String?
+
+  loan          Loan     @relation(fields: [loanId], references: [id])
+}
+
+model MonthlyCycle {
+  id                     String   @id @default(cuid())
+  cycleStart             DateTime
+  cycleEnd               DateTime
+  status                 String   @default("open")
+  totalInterestCollected Float    @default(0)
+  totalDistributed       Float    @default(0)
+  distributedAt          DateTime?
+  createdAt              DateTime @default(now())
+
+  distributions          ProfitDistribution[]
+}
+
+model ProfitDistribution {
+  id          String    @id @default(cuid())
+  cycleId     String
+  investorId  String
+  balanceUsed Float
+  shareAmount Float
+  status      String    @default("pending")
+  paidDate    DateTime?
+
+  cycle       MonthlyCycle @relation(fields: [cycleId], references: [id])
+  investor    Investor     @relation(fields: [investorId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  createdAt DateTime @default(now())
+}
