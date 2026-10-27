@@ -12,11 +12,9 @@
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^7.10.1",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^13.0.3",
     "next": "16.4.3",
     "next-auth": "^4.24.15",
     "pg": "^8.23.1",
