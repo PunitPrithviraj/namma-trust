@@ -1,8 +1,11 @@
 import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+import * as dotenv from "dotenv";
 
-const adapter = new PrismaBetterSqlite3({ url: "file:./dev.db" });
+dotenv.config(); // Load .env variables
+
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL as string });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
@@ -11,19 +14,19 @@ async function main() {
   await prisma.user.upsert({
     where: { email: "admin@nammatrust.com" },
     update: {
-      phone: "8970089722", // Adding phone to existing admin
+      phone: "7090860793",
     },
     create: {
       name: "Admin",
       email: "admin@nammatrust.com",
-      phone: "8970089722", // Added phone number here
+      phone: "7090860793",
       passwordHash,
       role: "admin",
     },
   });
 
   console.log("✅ Admin created/updated: admin@nammatrust.com / admin123");
-  console.log("✅ Admin phone number: 8970089722");
+  console.log("✅ Admin phone number: 7090860793");
 }
 
 main()
