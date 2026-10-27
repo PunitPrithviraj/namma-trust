@@ -1865,6 +1865,7 @@ export type InvestorCreateManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * The data used to create many Investors.
    */
   data: Prisma.InvestorCreateManyInput | Prisma.InvestorCreateManyInput[]
+  skipDuplicates?: boolean
 }
 
 /**
@@ -1883,6 +1884,7 @@ export type InvestorCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extens
    * The data used to create many Investors.
    */
   data: Prisma.InvestorCreateManyInput | Prisma.InvestorCreateManyInput[]
+  skipDuplicates?: boolean
   /**
    * Choose, which related nodes to fetch as well
    */

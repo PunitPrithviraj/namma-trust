@@ -636,6 +636,7 @@ export type LoanScheduleCreateOrConnectWithoutLoanInput = {
 
 export type LoanScheduleCreateManyLoanInputEnvelope = {
   data: Prisma.LoanScheduleCreateManyLoanInput | Prisma.LoanScheduleCreateManyLoanInput[]
+  skipDuplicates?: boolean
 }
 
 export type LoanScheduleUpsertWithWhereUniqueWithoutLoanInput = {
@@ -1492,6 +1493,7 @@ export type LoanScheduleCreateManyArgs<ExtArgs extends runtime.Types.Extensions.
    * The data used to create many LoanSchedules.
    */
   data: Prisma.LoanScheduleCreateManyInput | Prisma.LoanScheduleCreateManyInput[]
+  skipDuplicates?: boolean
 }
 
 /**
@@ -1510,6 +1512,7 @@ export type LoanScheduleCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Ex
    * The data used to create many LoanSchedules.
    */
   data: Prisma.LoanScheduleCreateManyInput | Prisma.LoanScheduleCreateManyInput[]
+  skipDuplicates?: boolean
   /**
    * Choose, which related nodes to fetch as well
    */

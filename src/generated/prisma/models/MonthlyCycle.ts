@@ -1276,6 +1276,7 @@ export type MonthlyCycleCreateManyArgs<ExtArgs extends runtime.Types.Extensions.
    * The data used to create many MonthlyCycles.
    */
   data: Prisma.MonthlyCycleCreateManyInput | Prisma.MonthlyCycleCreateManyInput[]
+  skipDuplicates?: boolean
 }
 
 /**
@@ -1294,6 +1295,7 @@ export type MonthlyCycleCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Ex
    * The data used to create many MonthlyCycles.
    */
   data: Prisma.MonthlyCycleCreateManyInput | Prisma.MonthlyCycleCreateManyInput[]
+  skipDuplicates?: boolean
 }
 
 /**

@@ -522,6 +522,7 @@ export type ProfitDistributionCreateOrConnectWithoutInvestorInput = {
 
 export type ProfitDistributionCreateManyInvestorInputEnvelope = {
   data: Prisma.ProfitDistributionCreateManyInvestorInput | Prisma.ProfitDistributionCreateManyInvestorInput[]
+  skipDuplicates?: boolean
 }
 
 export type ProfitDistributionUpsertWithWhereUniqueWithoutInvestorInput = {
@@ -578,6 +579,7 @@ export type ProfitDistributionCreateOrConnectWithoutCycleInput = {
 
 export type ProfitDistributionCreateManyCycleInputEnvelope = {
   data: Prisma.ProfitDistributionCreateManyCycleInput | Prisma.ProfitDistributionCreateManyCycleInput[]
+  skipDuplicates?: boolean
 }
 
 export type ProfitDistributionUpsertWithWhereUniqueWithoutCycleInput = {
@@ -1410,6 +1412,7 @@ export type ProfitDistributionCreateManyArgs<ExtArgs extends runtime.Types.Exten
    * The data used to create many ProfitDistributions.
    */
   data: Prisma.ProfitDistributionCreateManyInput | Prisma.ProfitDistributionCreateManyInput[]
+  skipDuplicates?: boolean
 }
 
 /**
@@ -1428,6 +1431,7 @@ export type ProfitDistributionCreateManyAndReturnArgs<ExtArgs extends runtime.Ty
    * The data used to create many ProfitDistributions.
    */
   data: Prisma.ProfitDistributionCreateManyInput | Prisma.ProfitDistributionCreateManyInput[]
+  skipDuplicates?: boolean
   /**
    * Choose, which related nodes to fetch as well
    */

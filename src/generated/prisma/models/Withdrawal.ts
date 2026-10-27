@@ -448,6 +448,7 @@ export type WithdrawalCreateOrConnectWithoutInvestorInput = {
 
 export type WithdrawalCreateManyInvestorInputEnvelope = {
   data: Prisma.WithdrawalCreateManyInvestorInput | Prisma.WithdrawalCreateManyInvestorInput[]
+  skipDuplicates?: boolean
 }
 
 export type WithdrawalUpsertWithWhereUniqueWithoutInvestorInput = {
@@ -1238,6 +1239,7 @@ export type WithdrawalCreateManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * The data used to create many Withdrawals.
    */
   data: Prisma.WithdrawalCreateManyInput | Prisma.WithdrawalCreateManyInput[]
+  skipDuplicates?: boolean
 }
 
 /**
@@ -1256,6 +1258,7 @@ export type WithdrawalCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Exte
    * The data used to create many Withdrawals.
    */
   data: Prisma.WithdrawalCreateManyInput | Prisma.WithdrawalCreateManyInput[]
+  skipDuplicates?: boolean
   /**
    * Choose, which related nodes to fetch as well
    */

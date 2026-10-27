@@ -504,6 +504,7 @@ export type InvestmentCreateOrConnectWithoutInvestorInput = {
 
 export type InvestmentCreateManyInvestorInputEnvelope = {
   data: Prisma.InvestmentCreateManyInvestorInput | Prisma.InvestmentCreateManyInvestorInput[]
+  skipDuplicates?: boolean
 }
 
 export type InvestmentUpsertWithWhereUniqueWithoutInvestorInput = {
@@ -1316,6 +1317,7 @@ export type InvestmentCreateManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * The data used to create many Investments.
    */
   data: Prisma.InvestmentCreateManyInput | Prisma.InvestmentCreateManyInput[]
+  skipDuplicates?: boolean
 }
 
 /**
@@ -1334,6 +1336,7 @@ export type InvestmentCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Exte
    * The data used to create many Investments.
    */
   data: Prisma.InvestmentCreateManyInput | Prisma.InvestmentCreateManyInput[]
+  skipDuplicates?: boolean
   /**
    * Choose, which related nodes to fetch as well
    */
