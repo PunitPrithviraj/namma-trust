@@ -143,7 +143,7 @@ function InvestorContent() {
     }
   });
 
-  // --- NEW CALCULATION: Investment + Profit - Withdrawals ---
+  // ✅ Current Balance = Investment + Profit - Withdrawals
   const customBalance = totalInvestment + totalProfit - totalWithdrawn;
 
   return (
@@ -153,19 +153,16 @@ function InvestorContent() {
       <div className="hidden print:block mb-6">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid black', paddingBottom: '10px' }}>
           
-          {/* Left: Namma Trust (Big) */}
           <div>
             <h1 style={{ fontSize: '26pt', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, lineHeight: 1 }}>Namma Trust</h1>
           </div>
 
-          {/* Right: Statement & Date (Small) */}
           <div style={{ textAlign: 'right' }}>
             <p style={{ fontSize: '11pt', fontWeight: 'bold', textTransform: 'uppercase', margin: 0 }}>Investor Statement</p>
             <p style={{ fontSize: '9pt', color: '#555', margin: 0 }}>Generated: {new Date().toLocaleDateString("en-IN")}</p>
           </div>
         </div>
 
-        {/* Investor Details (Medium size) */}
         <div style={{ marginTop: '12px', fontSize: '13pt', fontWeight: 'bold', color: '#333' }}>
           {data.name} {data.code ? `(${data.code})` : ""} 
           <span style={{ fontSize: '10pt', fontWeight: 'normal', color: '#666', marginLeft: '10px' }}>
@@ -173,7 +170,6 @@ function InvestorContent() {
           </span>
         </div>
 
-        {/* --- COMPACT PRINT-ONLY SUMMARY --- */}
         <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '24px', fontSize: '10pt', border: '1px solid #999', padding: '8px 12px', backgroundColor: '#f9f9f9' }}>
           <div><strong>Total Investment:</strong> ₹{totalInvestment.toLocaleString("en-IN")}</div>
           <div><strong>Outstanding Loan:</strong> ₹{pendingDues.toLocaleString("en-IN")}</div>
@@ -237,7 +233,6 @@ function InvestorContent() {
           </div>
           <div className="flex gap-2">
             
-            {/* PRINT BUTTON */}
             <button 
               onClick={() => window.print()}
               className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900"
@@ -344,7 +339,7 @@ function InvestorContent() {
                 {[...data.investments.map((i:any)=>({...i, type:"Investment", color:"text-green-600"})), 
                   ...data.withdrawals.map((w:any)=>({...w, type:"Withdrawal", color:"text-red-600"}))]
                   .sort((a,b)=> new Date(b.date).getTime() - new Date(a.date).getTime())
-                  .slice(0, 5) // Show only latest 5 here
+                  .slice(0, 5)
                   .map((tx: any) => (
                   <tr key={tx.id} className="border-t hover:bg-gray-50">
                     <td className="px-4 py-2 text-sm">{new Date(tx.date).toLocaleDateString()}</td>
