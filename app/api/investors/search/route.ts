@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+// Force Next.js to never cache this API
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,7 +34,7 @@ export async function GET(req: Request) {
       const totalLoan = inv.loans.reduce((sum, l) => sum + l.principalAmount, 0);
       return {
         id: inv.id,
-        code: inv.code, // <-- ADDED THIS LINE
+        code: inv.code,
         name: inv.name,
         phone: inv.phone,
         totalInvestment,
@@ -41,6 +44,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(enrichedInvestors);
   } catch (error) {
+    console.error("Search error:", error);
     return NextResponse.json({ error: "Failed to search" }, { status: 500 });
   }
 }
