@@ -193,7 +193,7 @@ function LoanContent() {
                   
                   {/* ADDED DUE DATE DATA */}
                   <td className="px-4 py-3 text-gray-600">
-                    {new Date(sch.dueDate).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
+                    {sch.dueDate ? new Date(sch.dueDate).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}
                   </td>
                   
                   <td className="px-4 py-3 text-right">₹{sch.openingPrincipal.toLocaleString("en-IN")}</td>

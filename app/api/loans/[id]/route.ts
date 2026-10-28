@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+// THIS LINE FORCES NEXT.JS TO NEVER CACHE THIS ROUTE
+export const dynamic = "force-dynamic";
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -30,7 +33,6 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
-  // SECURITY CHECK
   if (!session || (session.user as any).role !== "admin")
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
