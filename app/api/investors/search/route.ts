@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// Force Next.js to never cache this API
+// FORCE NEXT.JS TO NEVER CACHE THIS ROUTE
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
