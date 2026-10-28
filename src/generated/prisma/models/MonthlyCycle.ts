@@ -433,10 +433,6 @@ export type MonthlyCycleScalarRelationFilter = {
   isNot?: Prisma.MonthlyCycleWhereInput
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type MonthlyCycleCreateNestedOneWithoutDistributionsInput = {
   create?: Prisma.XOR<Prisma.MonthlyCycleCreateWithoutDistributionsInput, Prisma.MonthlyCycleUncheckedCreateWithoutDistributionsInput>
   connectOrCreate?: Prisma.MonthlyCycleCreateOrConnectWithoutDistributionsInput

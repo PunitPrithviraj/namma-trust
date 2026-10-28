@@ -8,114 +8,65 @@ const loanSchema = z.object({
   investorId: z.string(),
   principalAmount: z.number().positive(),
   termAmount: z.number().positive(),
-  startDate: z.string(), // Accept date from frontend
+  interestRate: z.number().positive(),
+  loanTerm: z.number().positive(),
+  startDate: z.string(),
+  notes: z.string().optional(),
 });
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if ((session.user as any).role !== "admin")
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!session || (session.user as any).role !== "admin")
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
   const parsed = loanSchema.safeParse(body);
-  if (!parsed.success)
-    return NextResponse.json({ error: parsed.error.issues }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues }, { status: 400 });
 
-  const { investorId, principalAmount, termAmount, startDate } = parsed.data;
+  const { investorId, principalAmount, termAmount, interestRate, loanTerm, startDate, notes } = parsed.data;
 
-  // 1. Check trust funds
-  const investors = await prisma.investor.findMany({
-    include: { investments: true, withdrawals: true },
-  });
-  
-  let totalIn = 0;
-  let totalOut = 0;
-  investors.forEach(inv => {
-    totalIn += inv.investments.reduce((s, i) => s + i.amount, 0);
-    totalOut += inv.withdrawals.reduce((s, w) => s + w.amount, 0);
-  });
-
-  const activeLoans = await prisma.loan.findMany({ where: { status: "active" } });
-  const totalPrincipalLoaned = activeLoans.reduce((s, l) => s + l.principalAmount, 0);
-  const cashInHand = totalIn - totalOut - totalPrincipalLoaned;
-
-  if (principalAmount > cashInHand) {
-    return NextResponse.json(
-      { error: `Insufficient trust funds. Cash in hand: ₹${cashInHand.toLocaleString("en-IN")}` }, 
-      { status: 400 }
-    );
+  // Validation: Ensure termAmount * loanTerm covers the principal
+  if (termAmount * loanTerm < principalAmount) {
+    return NextResponse.json({ error: "Monthly principal × term is less than total loan. Increase term or monthly amount." }, { status: 400 });
   }
 
-  // 2. Generate Loan Code
-  const lastLoan = await prisma.loan.findFirst({
-    where: { code: { startsWith: "LN-" } },
-    orderBy: { code: "desc" },
-  });
+  // Code Generation
+  const lastLoan = await prisma.loan.findFirst({ where: { code: { startsWith: "LN-" } }, orderBy: { code: "desc" } });
+  const nextCode = lastLoan?.code ? `LN-${String(parseInt(lastLoan.code.replace("LN-", ""), 10) + 1).padStart(3, "0")}` : "LN-001";
 
-  let nextLoanCode = "LN-001";
-  if (lastLoan && lastLoan.code) {
-    const lastNumber = parseInt(lastLoan.code.replace("LN-", ""), 10);
-    nextLoanCode = `LN-${String(lastNumber + 1).padStart(3, "0")}`;
-  }
-
-  // 3. Create the Loan
+  // Create Loan
   const loan = await prisma.loan.create({
-    data: {
-      code: nextLoanCode,
-      investorId,
-      principalAmount,
-      termAmount,
-      startDate: new Date(startDate),
-      status: "active",
-    },
+    data: { code: nextCode, investorId, principalAmount, termAmount, interestRate, loanTerm, startDate: new Date(startDate), notes, status: "active" }
   });
 
-  // 4. Generate Schedule based strictly on the selected date
+  // Generate Schedule (Math uses 1.5% on outstanding)
   let currentPrincipal = principalAmount;
   let monthNo = 1;
   const scheduleData = [];
-
-  // Parse the selected date from the frontend
-  const loanDate = new Date(startDate);
   
-  // Set the first due date to the 9th of the FOLLOWING month
+  // First due date: 9th of next month
+  const loanDate = new Date(startDate);
   let nextDueDate = new Date(loanDate.getFullYear(), loanDate.getMonth() + 1, 9);
 
   while (currentPrincipal > 0) {
-    const interestAmount = currentPrincipal * 0.015;
-    const extra1000 = 1000;
+    const interestAmount = Number((currentPrincipal * (interestRate / 100)).toFixed(2));
     let principalReduction = termAmount;
+    if (currentPrincipal < termAmount) principalReduction = currentPrincipal;
 
-    if (currentPrincipal < termAmount) {
-      principalReduction = currentPrincipal;
-    }
-
-    const closingPrincipal = currentPrincipal - principalReduction;
+    const closingPrincipal = Number((currentPrincipal - principalReduction).toFixed(2));
 
     scheduleData.push({
-      loanId: loan.id,
-      monthNo,
-      dueDate: new Date(nextDueDate),
-      openingPrincipal: currentPrincipal,
-      interestAmount,
-      termAmount: principalReduction,
-      extra1000,
-      extraRepayment: 0,
-      closingPrincipal,
-      status: "pending",
+      loanId: loan.id, monthNo, dueDate: new Date(nextDueDate),
+      openingPrincipal: currentPrincipal, interestAmount,
+      termAmount: principalReduction, extra1000: 1000, // Compulsory investment retained
+      extraRepayment: 0, closingPrincipal, status: "pending",
     });
 
     currentPrincipal = closingPrincipal;
     monthNo++;
-    
-    // Move to the 9th of the next month
     nextDueDate.setMonth(nextDueDate.getMonth() + 1);
   }
 
-  await prisma.loanSchedule.createMany({
-    data: scheduleData,
-  });
-
+  await prisma.loanSchedule.createMany({ data: scheduleData });
   return NextResponse.json({ success: true, loanId: loan.id });
 }

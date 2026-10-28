@@ -29,11 +29,15 @@ export type AggregateLoan = {
 export type LoanAvgAggregateOutputType = {
   principalAmount: number | null
   termAmount: number | null
+  interestRate: number | null
+  loanTerm: number | null
 }
 
 export type LoanSumAggregateOutputType = {
   principalAmount: number | null
   termAmount: number | null
+  interestRate: number | null
+  loanTerm: number | null
 }
 
 export type LoanMinAggregateOutputType = {
@@ -42,8 +46,12 @@ export type LoanMinAggregateOutputType = {
   investorId: string | null
   principalAmount: number | null
   termAmount: number | null
+  interestRate: number | null
+  loanTerm: number | null
   startDate: Date | null
+  closureDate: Date | null
   status: string | null
+  notes: string | null
   createdAt: Date | null
 }
 
@@ -53,8 +61,12 @@ export type LoanMaxAggregateOutputType = {
   investorId: string | null
   principalAmount: number | null
   termAmount: number | null
+  interestRate: number | null
+  loanTerm: number | null
   startDate: Date | null
+  closureDate: Date | null
   status: string | null
+  notes: string | null
   createdAt: Date | null
 }
 
@@ -64,8 +76,12 @@ export type LoanCountAggregateOutputType = {
   investorId: number
   principalAmount: number
   termAmount: number
+  interestRate: number
+  loanTerm: number
   startDate: number
+  closureDate: number
   status: number
+  notes: number
   createdAt: number
   _all: number
 }
@@ -74,11 +90,15 @@ export type LoanCountAggregateOutputType = {
 export type LoanAvgAggregateInputType = {
   principalAmount?: true
   termAmount?: true
+  interestRate?: true
+  loanTerm?: true
 }
 
 export type LoanSumAggregateInputType = {
   principalAmount?: true
   termAmount?: true
+  interestRate?: true
+  loanTerm?: true
 }
 
 export type LoanMinAggregateInputType = {
@@ -87,8 +107,12 @@ export type LoanMinAggregateInputType = {
   investorId?: true
   principalAmount?: true
   termAmount?: true
+  interestRate?: true
+  loanTerm?: true
   startDate?: true
+  closureDate?: true
   status?: true
+  notes?: true
   createdAt?: true
 }
 
@@ -98,8 +122,12 @@ export type LoanMaxAggregateInputType = {
   investorId?: true
   principalAmount?: true
   termAmount?: true
+  interestRate?: true
+  loanTerm?: true
   startDate?: true
+  closureDate?: true
   status?: true
+  notes?: true
   createdAt?: true
 }
 
@@ -109,8 +137,12 @@ export type LoanCountAggregateInputType = {
   investorId?: true
   principalAmount?: true
   termAmount?: true
+  interestRate?: true
+  loanTerm?: true
   startDate?: true
+  closureDate?: true
   status?: true
+  notes?: true
   createdAt?: true
   _all?: true
 }
@@ -207,8 +239,12 @@ export type LoanGroupByOutputType = {
   investorId: string
   principalAmount: number
   termAmount: number
+  interestRate: number
+  loanTerm: number
   startDate: Date
+  closureDate: Date | null
   status: string
+  notes: string | null
   createdAt: Date
   _count: LoanCountAggregateOutputType | null
   _avg: LoanAvgAggregateOutputType | null
@@ -241,8 +277,12 @@ export type LoanWhereInput = {
   investorId?: Prisma.StringFilter<"Loan"> | string
   principalAmount?: Prisma.FloatFilter<"Loan"> | number
   termAmount?: Prisma.FloatFilter<"Loan"> | number
+  interestRate?: Prisma.FloatFilter<"Loan"> | number
+  loanTerm?: Prisma.IntFilter<"Loan"> | number
   startDate?: Prisma.DateTimeFilter<"Loan"> | Date | string
+  closureDate?: Prisma.DateTimeNullableFilter<"Loan"> | Date | string | null
   status?: Prisma.StringFilter<"Loan"> | string
+  notes?: Prisma.StringNullableFilter<"Loan"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Loan"> | Date | string
   investor?: Prisma.XOR<Prisma.InvestorScalarRelationFilter, Prisma.InvestorWhereInput>
   schedule?: Prisma.LoanScheduleListRelationFilter
@@ -255,8 +295,12 @@ export type LoanOrderByWithRelationInput = {
   investorId?: Prisma.SortOrder
   principalAmount?: Prisma.SortOrder
   termAmount?: Prisma.SortOrder
+  interestRate?: Prisma.SortOrder
+  loanTerm?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
+  closureDate?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  notes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   investor?: Prisma.InvestorOrderByWithRelationInput
   schedule?: Prisma.LoanScheduleOrderByRelationAggregateInput
@@ -272,8 +316,12 @@ export type LoanWhereUniqueInput = Prisma.AtLeast<{
   investorId?: Prisma.StringFilter<"Loan"> | string
   principalAmount?: Prisma.FloatFilter<"Loan"> | number
   termAmount?: Prisma.FloatFilter<"Loan"> | number
+  interestRate?: Prisma.FloatFilter<"Loan"> | number
+  loanTerm?: Prisma.IntFilter<"Loan"> | number
   startDate?: Prisma.DateTimeFilter<"Loan"> | Date | string
+  closureDate?: Prisma.DateTimeNullableFilter<"Loan"> | Date | string | null
   status?: Prisma.StringFilter<"Loan"> | string
+  notes?: Prisma.StringNullableFilter<"Loan"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Loan"> | Date | string
   investor?: Prisma.XOR<Prisma.InvestorScalarRelationFilter, Prisma.InvestorWhereInput>
   schedule?: Prisma.LoanScheduleListRelationFilter
@@ -286,8 +334,12 @@ export type LoanOrderByWithAggregationInput = {
   investorId?: Prisma.SortOrder
   principalAmount?: Prisma.SortOrder
   termAmount?: Prisma.SortOrder
+  interestRate?: Prisma.SortOrder
+  loanTerm?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
+  closureDate?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  notes?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.LoanCountOrderByAggregateInput
   _avg?: Prisma.LoanAvgOrderByAggregateInput
@@ -305,8 +357,12 @@ export type LoanScalarWhereWithAggregatesInput = {
   investorId?: Prisma.StringWithAggregatesFilter<"Loan"> | string
   principalAmount?: Prisma.FloatWithAggregatesFilter<"Loan"> | number
   termAmount?: Prisma.FloatWithAggregatesFilter<"Loan"> | number
+  interestRate?: Prisma.FloatWithAggregatesFilter<"Loan"> | number
+  loanTerm?: Prisma.IntWithAggregatesFilter<"Loan"> | number
   startDate?: Prisma.DateTimeWithAggregatesFilter<"Loan"> | Date | string
+  closureDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Loan"> | Date | string | null
   status?: Prisma.StringWithAggregatesFilter<"Loan"> | string
+  notes?: Prisma.StringNullableWithAggregatesFilter<"Loan"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Loan"> | Date | string
 }
 
@@ -315,8 +371,12 @@ export type LoanCreateInput = {
   code?: string | null
   principalAmount: number
   termAmount: number
+  interestRate?: number
+  loanTerm: number
   startDate?: Date | string
+  closureDate?: Date | string | null
   status?: string
+  notes?: string | null
   createdAt?: Date | string
   investor: Prisma.InvestorCreateNestedOneWithoutLoansInput
   schedule?: Prisma.LoanScheduleCreateNestedManyWithoutLoanInput
@@ -329,8 +389,12 @@ export type LoanUncheckedCreateInput = {
   investorId: string
   principalAmount: number
   termAmount: number
+  interestRate?: number
+  loanTerm: number
   startDate?: Date | string
+  closureDate?: Date | string | null
   status?: string
+  notes?: string | null
   createdAt?: Date | string
   schedule?: Prisma.LoanScheduleUncheckedCreateNestedManyWithoutLoanInput
   repayments?: Prisma.RepaymentUncheckedCreateNestedManyWithoutLoanInput
@@ -341,8 +405,12 @@ export type LoanUpdateInput = {
   code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   principalAmount?: Prisma.FloatFieldUpdateOperationsInput | number
   termAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  interestRate?: Prisma.FloatFieldUpdateOperationsInput | number
+  loanTerm?: Prisma.IntFieldUpdateOperationsInput | number
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closureDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   investor?: Prisma.InvestorUpdateOneRequiredWithoutLoansNestedInput
   schedule?: Prisma.LoanScheduleUpdateManyWithoutLoanNestedInput
@@ -355,8 +423,12 @@ export type LoanUncheckedUpdateInput = {
   investorId?: Prisma.StringFieldUpdateOperationsInput | string
   principalAmount?: Prisma.FloatFieldUpdateOperationsInput | number
   termAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  interestRate?: Prisma.FloatFieldUpdateOperationsInput | number
+  loanTerm?: Prisma.IntFieldUpdateOperationsInput | number
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closureDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   schedule?: Prisma.LoanScheduleUncheckedUpdateManyWithoutLoanNestedInput
   repayments?: Prisma.RepaymentUncheckedUpdateManyWithoutLoanNestedInput
@@ -368,8 +440,12 @@ export type LoanCreateManyInput = {
   investorId: string
   principalAmount: number
   termAmount: number
+  interestRate?: number
+  loanTerm: number
   startDate?: Date | string
+  closureDate?: Date | string | null
   status?: string
+  notes?: string | null
   createdAt?: Date | string
 }
 
@@ -378,8 +454,12 @@ export type LoanUpdateManyMutationInput = {
   code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   principalAmount?: Prisma.FloatFieldUpdateOperationsInput | number
   termAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  interestRate?: Prisma.FloatFieldUpdateOperationsInput | number
+  loanTerm?: Prisma.IntFieldUpdateOperationsInput | number
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closureDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -389,8 +469,12 @@ export type LoanUncheckedUpdateManyInput = {
   investorId?: Prisma.StringFieldUpdateOperationsInput | string
   principalAmount?: Prisma.FloatFieldUpdateOperationsInput | number
   termAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  interestRate?: Prisma.FloatFieldUpdateOperationsInput | number
+  loanTerm?: Prisma.IntFieldUpdateOperationsInput | number
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closureDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -410,14 +494,20 @@ export type LoanCountOrderByAggregateInput = {
   investorId?: Prisma.SortOrder
   principalAmount?: Prisma.SortOrder
   termAmount?: Prisma.SortOrder
+  interestRate?: Prisma.SortOrder
+  loanTerm?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
+  closureDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type LoanAvgOrderByAggregateInput = {
   principalAmount?: Prisma.SortOrder
   termAmount?: Prisma.SortOrder
+  interestRate?: Prisma.SortOrder
+  loanTerm?: Prisma.SortOrder
 }
 
 export type LoanMaxOrderByAggregateInput = {
@@ -426,8 +516,12 @@ export type LoanMaxOrderByAggregateInput = {
   investorId?: Prisma.SortOrder
   principalAmount?: Prisma.SortOrder
   termAmount?: Prisma.SortOrder
+  interestRate?: Prisma.SortOrder
+  loanTerm?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
+  closureDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -437,14 +531,20 @@ export type LoanMinOrderByAggregateInput = {
   investorId?: Prisma.SortOrder
   principalAmount?: Prisma.SortOrder
   termAmount?: Prisma.SortOrder
+  interestRate?: Prisma.SortOrder
+  loanTerm?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
+  closureDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type LoanSumOrderByAggregateInput = {
   principalAmount?: Prisma.SortOrder
   termAmount?: Prisma.SortOrder
+  interestRate?: Prisma.SortOrder
+  loanTerm?: Prisma.SortOrder
 }
 
 export type LoanScalarRelationFilter = {
@@ -494,6 +594,18 @@ export type LoanUncheckedUpdateManyWithoutInvestorNestedInput = {
   deleteMany?: Prisma.LoanScalarWhereInput | Prisma.LoanScalarWhereInput[]
 }
 
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
 export type LoanCreateNestedOneWithoutScheduleInput = {
   create?: Prisma.XOR<Prisma.LoanCreateWithoutScheduleInput, Prisma.LoanUncheckedCreateWithoutScheduleInput>
   connectOrCreate?: Prisma.LoanCreateOrConnectWithoutScheduleInput
@@ -527,8 +639,12 @@ export type LoanCreateWithoutInvestorInput = {
   code?: string | null
   principalAmount: number
   termAmount: number
+  interestRate?: number
+  loanTerm: number
   startDate?: Date | string
+  closureDate?: Date | string | null
   status?: string
+  notes?: string | null
   createdAt?: Date | string
   schedule?: Prisma.LoanScheduleCreateNestedManyWithoutLoanInput
   repayments?: Prisma.RepaymentCreateNestedManyWithoutLoanInput
@@ -539,8 +655,12 @@ export type LoanUncheckedCreateWithoutInvestorInput = {
   code?: string | null
   principalAmount: number
   termAmount: number
+  interestRate?: number
+  loanTerm: number
   startDate?: Date | string
+  closureDate?: Date | string | null
   status?: string
+  notes?: string | null
   createdAt?: Date | string
   schedule?: Prisma.LoanScheduleUncheckedCreateNestedManyWithoutLoanInput
   repayments?: Prisma.RepaymentUncheckedCreateNestedManyWithoutLoanInput
@@ -581,8 +701,12 @@ export type LoanScalarWhereInput = {
   investorId?: Prisma.StringFilter<"Loan"> | string
   principalAmount?: Prisma.FloatFilter<"Loan"> | number
   termAmount?: Prisma.FloatFilter<"Loan"> | number
+  interestRate?: Prisma.FloatFilter<"Loan"> | number
+  loanTerm?: Prisma.IntFilter<"Loan"> | number
   startDate?: Prisma.DateTimeFilter<"Loan"> | Date | string
+  closureDate?: Prisma.DateTimeNullableFilter<"Loan"> | Date | string | null
   status?: Prisma.StringFilter<"Loan"> | string
+  notes?: Prisma.StringNullableFilter<"Loan"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Loan"> | Date | string
 }
 
@@ -591,8 +715,12 @@ export type LoanCreateWithoutScheduleInput = {
   code?: string | null
   principalAmount: number
   termAmount: number
+  interestRate?: number
+  loanTerm: number
   startDate?: Date | string
+  closureDate?: Date | string | null
   status?: string
+  notes?: string | null
   createdAt?: Date | string
   investor: Prisma.InvestorCreateNestedOneWithoutLoansInput
   repayments?: Prisma.RepaymentCreateNestedManyWithoutLoanInput
@@ -604,8 +732,12 @@ export type LoanUncheckedCreateWithoutScheduleInput = {
   investorId: string
   principalAmount: number
   termAmount: number
+  interestRate?: number
+  loanTerm: number
   startDate?: Date | string
+  closureDate?: Date | string | null
   status?: string
+  notes?: string | null
   createdAt?: Date | string
   repayments?: Prisma.RepaymentUncheckedCreateNestedManyWithoutLoanInput
 }
@@ -631,8 +763,12 @@ export type LoanUpdateWithoutScheduleInput = {
   code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   principalAmount?: Prisma.FloatFieldUpdateOperationsInput | number
   termAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  interestRate?: Prisma.FloatFieldUpdateOperationsInput | number
+  loanTerm?: Prisma.IntFieldUpdateOperationsInput | number
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closureDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   investor?: Prisma.InvestorUpdateOneRequiredWithoutLoansNestedInput
   repayments?: Prisma.RepaymentUpdateManyWithoutLoanNestedInput
@@ -644,8 +780,12 @@ export type LoanUncheckedUpdateWithoutScheduleInput = {
   investorId?: Prisma.StringFieldUpdateOperationsInput | string
   principalAmount?: Prisma.FloatFieldUpdateOperationsInput | number
   termAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  interestRate?: Prisma.FloatFieldUpdateOperationsInput | number
+  loanTerm?: Prisma.IntFieldUpdateOperationsInput | number
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closureDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   repayments?: Prisma.RepaymentUncheckedUpdateManyWithoutLoanNestedInput
 }
@@ -655,8 +795,12 @@ export type LoanCreateWithoutRepaymentsInput = {
   code?: string | null
   principalAmount: number
   termAmount: number
+  interestRate?: number
+  loanTerm: number
   startDate?: Date | string
+  closureDate?: Date | string | null
   status?: string
+  notes?: string | null
   createdAt?: Date | string
   investor: Prisma.InvestorCreateNestedOneWithoutLoansInput
   schedule?: Prisma.LoanScheduleCreateNestedManyWithoutLoanInput
@@ -668,8 +812,12 @@ export type LoanUncheckedCreateWithoutRepaymentsInput = {
   investorId: string
   principalAmount: number
   termAmount: number
+  interestRate?: number
+  loanTerm: number
   startDate?: Date | string
+  closureDate?: Date | string | null
   status?: string
+  notes?: string | null
   createdAt?: Date | string
   schedule?: Prisma.LoanScheduleUncheckedCreateNestedManyWithoutLoanInput
 }
@@ -695,8 +843,12 @@ export type LoanUpdateWithoutRepaymentsInput = {
   code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   principalAmount?: Prisma.FloatFieldUpdateOperationsInput | number
   termAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  interestRate?: Prisma.FloatFieldUpdateOperationsInput | number
+  loanTerm?: Prisma.IntFieldUpdateOperationsInput | number
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closureDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   investor?: Prisma.InvestorUpdateOneRequiredWithoutLoansNestedInput
   schedule?: Prisma.LoanScheduleUpdateManyWithoutLoanNestedInput
@@ -708,8 +860,12 @@ export type LoanUncheckedUpdateWithoutRepaymentsInput = {
   investorId?: Prisma.StringFieldUpdateOperationsInput | string
   principalAmount?: Prisma.FloatFieldUpdateOperationsInput | number
   termAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  interestRate?: Prisma.FloatFieldUpdateOperationsInput | number
+  loanTerm?: Prisma.IntFieldUpdateOperationsInput | number
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closureDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   schedule?: Prisma.LoanScheduleUncheckedUpdateManyWithoutLoanNestedInput
 }
@@ -719,8 +875,12 @@ export type LoanCreateManyInvestorInput = {
   code?: string | null
   principalAmount: number
   termAmount: number
+  interestRate?: number
+  loanTerm: number
   startDate?: Date | string
+  closureDate?: Date | string | null
   status?: string
+  notes?: string | null
   createdAt?: Date | string
 }
 
@@ -729,8 +889,12 @@ export type LoanUpdateWithoutInvestorInput = {
   code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   principalAmount?: Prisma.FloatFieldUpdateOperationsInput | number
   termAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  interestRate?: Prisma.FloatFieldUpdateOperationsInput | number
+  loanTerm?: Prisma.IntFieldUpdateOperationsInput | number
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closureDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   schedule?: Prisma.LoanScheduleUpdateManyWithoutLoanNestedInput
   repayments?: Prisma.RepaymentUpdateManyWithoutLoanNestedInput
@@ -741,8 +905,12 @@ export type LoanUncheckedUpdateWithoutInvestorInput = {
   code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   principalAmount?: Prisma.FloatFieldUpdateOperationsInput | number
   termAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  interestRate?: Prisma.FloatFieldUpdateOperationsInput | number
+  loanTerm?: Prisma.IntFieldUpdateOperationsInput | number
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closureDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   schedule?: Prisma.LoanScheduleUncheckedUpdateManyWithoutLoanNestedInput
   repayments?: Prisma.RepaymentUncheckedUpdateManyWithoutLoanNestedInput
@@ -753,8 +921,12 @@ export type LoanUncheckedUpdateManyWithoutInvestorInput = {
   code?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   principalAmount?: Prisma.FloatFieldUpdateOperationsInput | number
   termAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  interestRate?: Prisma.FloatFieldUpdateOperationsInput | number
+  loanTerm?: Prisma.IntFieldUpdateOperationsInput | number
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closureDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -804,8 +976,12 @@ export type LoanSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   investorId?: boolean
   principalAmount?: boolean
   termAmount?: boolean
+  interestRate?: boolean
+  loanTerm?: boolean
   startDate?: boolean
+  closureDate?: boolean
   status?: boolean
+  notes?: boolean
   createdAt?: boolean
   investor?: boolean | Prisma.InvestorDefaultArgs<ExtArgs>
   schedule?: boolean | Prisma.Loan$scheduleArgs<ExtArgs>
@@ -819,8 +995,12 @@ export type LoanSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   investorId?: boolean
   principalAmount?: boolean
   termAmount?: boolean
+  interestRate?: boolean
+  loanTerm?: boolean
   startDate?: boolean
+  closureDate?: boolean
   status?: boolean
+  notes?: boolean
   createdAt?: boolean
   investor?: boolean | Prisma.InvestorDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["loan"]>
@@ -831,8 +1011,12 @@ export type LoanSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   investorId?: boolean
   principalAmount?: boolean
   termAmount?: boolean
+  interestRate?: boolean
+  loanTerm?: boolean
   startDate?: boolean
+  closureDate?: boolean
   status?: boolean
+  notes?: boolean
   createdAt?: boolean
   investor?: boolean | Prisma.InvestorDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["loan"]>
@@ -843,12 +1027,16 @@ export type LoanSelectScalar = {
   investorId?: boolean
   principalAmount?: boolean
   termAmount?: boolean
+  interestRate?: boolean
+  loanTerm?: boolean
   startDate?: boolean
+  closureDate?: boolean
   status?: boolean
+  notes?: boolean
   createdAt?: boolean
 }
 
-export type LoanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "investorId" | "principalAmount" | "termAmount" | "startDate" | "status" | "createdAt", ExtArgs["result"]["loan"]>
+export type LoanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "investorId" | "principalAmount" | "termAmount" | "interestRate" | "loanTerm" | "startDate" | "closureDate" | "status" | "notes" | "createdAt", ExtArgs["result"]["loan"]>
 export type LoanInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   investor?: boolean | Prisma.InvestorDefaultArgs<ExtArgs>
   schedule?: boolean | Prisma.Loan$scheduleArgs<ExtArgs>
@@ -875,8 +1063,12 @@ export type $LoanPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     investorId: string
     principalAmount: number
     termAmount: number
+    interestRate: number
+    loanTerm: number
     startDate: Date
+    closureDate: Date | null
     status: string
+    notes: string | null
     createdAt: Date
   }, ExtArgs["result"]["loan"]>
   composites: {}
@@ -1309,8 +1501,12 @@ export interface LoanFieldRefs {
   readonly investorId: Prisma.FieldRef<"Loan", 'String'>
   readonly principalAmount: Prisma.FieldRef<"Loan", 'Float'>
   readonly termAmount: Prisma.FieldRef<"Loan", 'Float'>
+  readonly interestRate: Prisma.FieldRef<"Loan", 'Float'>
+  readonly loanTerm: Prisma.FieldRef<"Loan", 'Int'>
   readonly startDate: Prisma.FieldRef<"Loan", 'DateTime'>
+  readonly closureDate: Prisma.FieldRef<"Loan", 'DateTime'>
   readonly status: Prisma.FieldRef<"Loan", 'String'>
+  readonly notes: Prisma.FieldRef<"Loan", 'String'>
   readonly createdAt: Prisma.FieldRef<"Loan", 'DateTime'>
 }
     

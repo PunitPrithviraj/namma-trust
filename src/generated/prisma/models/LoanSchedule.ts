@@ -593,14 +593,6 @@ export type LoanScheduleUncheckedUpdateManyWithoutLoanNestedInput = {
   deleteMany?: Prisma.LoanScheduleScalarWhereInput | Prisma.LoanScheduleScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type LoanScheduleCreateWithoutLoanInput = {
   id?: string
   cycleId?: string | null

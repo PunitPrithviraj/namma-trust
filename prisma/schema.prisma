@@ -69,20 +69,23 @@ model Withdrawal {
 }
 
 model Loan {
-  id              String   @id @default(cuid())
-  code            String?  @unique
+  id              String    @id @default(cuid())
+  code            String?   @unique
   investorId      String
   principalAmount Float
   termAmount      Float
-  startDate       DateTime @default(now())
-  status          String   @default("active")
-  createdAt       DateTime @default(now())
+  interestRate    Float     @default(1.5) // Store as percentage
+  loanTerm        Int       // Original term in months
+  startDate       DateTime  @default(now())
+  closureDate     DateTime? // For early settlement
+  status          String    @default("active")
+  notes           String?   // Loan purpose
+  createdAt       DateTime  @default(now())
 
   investor        Investor       @relation(fields: [investorId], references: [id])
   schedule        LoanSchedule[]
   repayments      Repayment[]
 }
-
 model LoanSchedule {
   id               String   @id @default(cuid())
   loanId           String

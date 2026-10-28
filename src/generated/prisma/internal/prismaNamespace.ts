@@ -1272,8 +1272,12 @@ export const LoanScalarFieldEnum = {
   investorId: 'investorId',
   principalAmount: 'principalAmount',
   termAmount: 'termAmount',
+  interestRate: 'interestRate',
+  loanTerm: 'loanTerm',
   startDate: 'startDate',
+  closureDate: 'closureDate',
   status: 'status',
+  notes: 'notes',
   createdAt: 'createdAt'
 } as const
 

@@ -44,7 +44,6 @@ function InvestorContent() {
   async function handleEditJoinDate() {
     const currentDate = new Date(data.joinDate).toISOString().split('T')[0];
     const newDate = prompt("Enter new joining date (YYYY-MM-DD):", currentDate);
-    
     if (!newDate) return;
 
     const res = await fetch(`/api/investors/${id}/update`, {
@@ -53,11 +52,8 @@ function InvestorContent() {
       body: JSON.stringify({ joinDate: newDate }),
     });
 
-    if (res.ok) {
-      load();
-    } else {
-      alert("Failed to update joining date. Make sure the format is YYYY-MM-DD.");
-    }
+    if (res.ok) load();
+    else alert("Failed to update joining date.");
   }
 
   async function handleTransaction(e: React.FormEvent) {
@@ -120,6 +116,7 @@ function InvestorContent() {
   if (errorMsg) return <div className="p-8 text-red-600">Error: {errorMsg}</div>;
   if (!data) return <div className="p-8 text-red-600">Investor not found.</div>;
 
+  // --- Financial Calculations ---
   const totalInvestment = data.investments?.reduce((sum: number, inv: any) => sum + inv.amount, 0) || 0;
 
   let totalLoan = 0;
@@ -206,7 +203,6 @@ function InvestorContent() {
           </div>
           <div className="flex gap-2">
             
-            {/* CREATE LOGIN BUTTON */}
             {isAdmin && !data.user && (
               <button 
                 onClick={async () => {
@@ -234,7 +230,6 @@ function InvestorContent() {
               </button>
             )}
             
-            {/* LOGIN ACTIVE BADGE */}
             {data.user && (
               <span className="bg-green-100 text-green-800 px-3 py-2 rounded text-sm font-medium">
                 Login: {data.user.email}
@@ -260,19 +255,25 @@ function InvestorContent() {
         </div>
       </div>
 
+      {/* CLICKABLE SUMMARY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+        <Link href={`/investors/${id}/investments`} className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:scale-[1.02] transition-transform cursor-pointer block">
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
           <p className="text-2xl font-bold text-gray-800 mt-1">₹{totalInvestment.toLocaleString("en-IN")}</p>
-        </div>
-        <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+          <p className="text-xs text-blue-500 mt-2">View History &rarr;</p>
+        </Link>
+        
+        <Link href={`/investors/${id}/loans`} className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:scale-[1.02] transition-transform cursor-pointer block">
           <p className="text-sm font-medium text-gray-500">Total Loan (Active)</p>
           <p className="text-2xl font-bold text-blue-600 mt-1">₹{totalLoan.toLocaleString("en-IN")}</p>
-        </div>
-        <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-          <p className="text-sm font-medium text-gray-500">Pending Dues</p>
-          <p className="text-2xl font-bold text-red-600 mt-1">₹{pendingDues.toLocaleString("en-IN")}</p>
-        </div>
+          <p className="text-xs text-blue-500 mt-2">View Loans &rarr;</p>
+        </Link>
+        
+        <Link href={`/investors/${id}/profits`} className="bg-purple-50 p-5 rounded-lg shadow-sm border border-purple-200 hover:scale-[1.02] transition-transform cursor-pointer block">
+          <p className="text-sm font-medium text-purple-700">Total Profit</p>
+          <p className="text-2xl font-bold text-purple-800 mt-1">₹{totalProfit.toLocaleString("en-IN")}</p>
+          <p className="text-xs text-purple-500 mt-2">View Profit History &rarr;</p>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -280,13 +281,13 @@ function InvestorContent() {
           <p className="text-sm font-medium text-green-700">Current Balance</p>
           <p className="text-2xl font-bold text-green-800 mt-1">₹{data.balance.toLocaleString("en-IN")}</p>
         </div>
+        <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+          <p className="text-sm font-medium text-gray-500">Pending Dues</p>
+          <p className="text-2xl font-bold text-red-600 mt-1">₹{pendingDues.toLocaleString("en-IN")}</p>
+        </div>
         <div className="bg-purple-50 p-5 rounded-lg shadow-sm border border-purple-200">
           <p className="text-sm font-medium text-purple-700">This Month's Profit</p>
           <p className="text-2xl font-bold text-purple-800 mt-1">₹{thisMonthProfit.toLocaleString("en-IN")}</p>
-        </div>
-        <div className="bg-purple-50 p-5 rounded-lg shadow-sm border border-purple-200">
-          <p className="text-sm font-medium text-purple-700">Total Profit (Lifetime)</p>
-          <p className="text-2xl font-bold text-purple-800 mt-1">₹{totalProfit.toLocaleString("en-IN")}</p>
         </div>
       </div>
 
@@ -294,14 +295,13 @@ function InvestorContent() {
         <div className="md:col-span-2 space-y-6">
           
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b bg-gray-50 font-semibold text-gray-700">Transaction History</div>
+            <div className="p-4 border-b bg-gray-50 font-semibold text-gray-700">Recent Transactions</div>
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="text-left px-4 py-2 text-sm text-gray-500">Date</th>
                   <th className="text-left px-4 py-2 text-sm text-gray-500">Type</th>
                   <th className="text-right px-4 py-2 text-sm text-gray-500">Amount</th>
-                  
                   {isAdmin && <th className="text-right px-4 py-2 text-sm text-gray-500 print:hidden">Action</th>}
                 </tr>
               </thead>
@@ -309,6 +309,7 @@ function InvestorContent() {
                 {[...data.investments.map((i:any)=>({...i, type:"Investment", color:"text-green-600"})), 
                   ...data.withdrawals.map((w:any)=>({...w, type:"Withdrawal", color:"text-red-600"}))]
                   .sort((a,b)=> new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .slice(0, 5) // Show only latest 5 here
                   .map((tx: any) => (
                   <tr key={tx.id} className="border-t hover:bg-gray-50">
                     <td className="px-4 py-2 text-sm">{new Date(tx.date).toLocaleDateString()}</td>
@@ -316,112 +317,18 @@ function InvestorContent() {
                     <td className={`px-4 py-2 text-right font-medium ${tx.color}`}>
                       {tx.type === "Withdrawal" ? "-" : "+"}₹{tx.amount.toLocaleString("en-IN")}
                     </td>
-                    
                     {isAdmin && (
                       <td className="px-4 py-2 text-right print:hidden">
                         <div className="flex justify-end gap-3">
-                          <button 
-                            onClick={() => handleEditTransaction(tx)}
-                            className="text-blue-600 hover:text-blue-800 text-xs font-bold"
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteTransaction(tx.id)}
-                            className="text-red-500 hover:text-red-700 text-xs font-bold"
-                          >
-                            Delete
-                          </button>
+                          <button onClick={() => handleEditTransaction(tx)} className="text-blue-600 hover:text-blue-800 text-xs font-bold">Edit</button>
+                          <button onClick={() => handleDeleteTransaction(tx.id)} className="text-red-500 hover:text-red-700 text-xs font-bold">Delete</button>
                         </div>
                       </td>
                     )}
                   </tr>
                 ))}
                 {data.investments.length === 0 && data.withdrawals.length === 0 && (
-                  <tr>
-                    <td colSpan={isAdmin ? 4 : 3} className="p-4 text-center text-gray-500">
-                      No transactions yet
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b bg-gray-50 font-semibold text-blue-700">Loan History</div>
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="text-left px-4 py-2 text-sm text-gray-500">Loan ID</th>
-                  <th className="text-left px-4 py-2 text-sm text-gray-500">Date</th>
-                  <th className="text-right px-4 py-2 text-sm text-gray-500">Principal</th>
-                  <th className="text-right px-4 py-2 text-sm text-gray-500">Outstanding</th>
-                  <th className="text-left px-4 py-2 text-sm text-gray-500">Status</th>
-                  <th className="text-right px-4 py-2 text-sm text-gray-500 print:hidden">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.loans?.map((loan: any) => {
-                  const outstanding = loan.schedule.length > 0 
-                    ? loan.schedule[loan.schedule.length - 1].closingPrincipal 
-                    : loan.principalAmount;
-
-                  return (
-                    <tr key={loan.id} className="border-t hover:bg-gray-50">
-                      <td className="px-4 py-2 font-mono text-sm text-gray-600">{loan.code || "N/A"}</td>
-                      <td className="px-4 py-2 text-sm">{new Date(loan.startDate).toLocaleDateString()}</td>
-                      <td className="px-4 py-2 text-right font-medium">₹{loan.principalAmount.toLocaleString("en-IN")}</td>
-                      <td className="px-4 py-2 text-right text-red-600 font-medium">₹{outstanding.toLocaleString("en-IN")}</td>
-                      <td className="px-4 py-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${loan.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-700"}`}>
-                          {loan.status.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2 text-right print:hidden">
-                        <button
-                          onClick={() => router.push(`/loans/${loan.id}`)}
-                          className="text-blue-600 hover:underline text-sm font-medium"
-                        >
-                          View Schedule
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {(!data.loans || data.loans.length === 0) && (
-                  <tr><td colSpan={6} className="p-4 text-center text-gray-500">No loans taken yet</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b bg-gray-50 font-semibold text-purple-700">Profit History</div>
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="text-left px-4 py-2 text-sm text-gray-500">Month Cycle</th>
-                  <th className="text-right px-4 py-2 text-sm text-gray-500">Balance Used</th>
-                  <th className="text-right px-4 py-2 text-sm text-gray-500">Profit Earned</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.profitDistributions?.map((pd: any) => (
-                  <tr key={pd.id} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-2 text-sm">
-                      {new Date(pd.cycle.cycleStart).toLocaleDateString("en-IN", { month: 'short', year: 'numeric' })} Cycle
-                    </td>
-                    <td className="px-4 py-2 text-right text-sm text-gray-500">
-                      ₹{pd.balanceUsed.toLocaleString("en-IN")}
-                    </td>
-                    <td className="px-4 py-2 text-right font-medium text-green-600">
-                      +₹{pd.shareAmount.toLocaleString("en-IN")}
-                    </td>
-                  </tr>
-                ))}
-                {(!data.profitDistributions || data.profitDistributions.length === 0) && (
-                  <tr><td colSpan={3} className="p-4 text-center text-gray-500 text-sm">No profit distributed yet</td></tr>
+                  <tr><td colSpan={isAdmin ? 4 : 3} className="p-4 text-center text-gray-500">No transactions yet</td></tr>
                 )}
               </tbody>
             </table>
@@ -438,44 +345,20 @@ function InvestorContent() {
               <form onSubmit={handleTransaction} className="space-y-4">
                 <label className="block">
                   <span className="text-sm font-medium text-gray-700">Type</span>
-                  <select
-                    value={txType}
-                    onChange={(e) => setTxType(e.target.value as any)}
-                    className="mt-1 w-full border rounded px-3 py-2"
-                  >
+                  <select value={txType} onChange={(e) => setTxType(e.target.value as any)} className="mt-1 w-full border rounded px-3 py-2">
                     <option value="investment">Add Investment</option>
                     <option value="withdrawal">Withdraw Funds</option>
                   </select>
                 </label>
-
                 <label className="block">
                   <span className="text-sm font-medium text-gray-700">Amount (₹)</span>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    required
-                    min="1"
-                    className="mt-1 w-full border rounded px-3 py-2"
-                  />
+                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required min="1" className="mt-1 w-full border rounded px-3 py-2" />
                 </label>
-
                 <label className="block">
                   <span className="text-sm font-medium text-gray-700">Notes (Optional)</span>
-                  <input
-                    type="text"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="mt-1 w-full border rounded px-3 py-2"
-                  />
+                  <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} className="mt-1 w-full border rounded px-3 py-2" />
                 </label>
-
-                <button
-                  type="submit"
-                  className={`w-full py-2 rounded text-white font-medium ${
-                    txType === "investment" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
-                  }`}
-                >
+                <button type="submit" className={`w-full py-2 rounded text-white font-medium ${txType === "investment" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}>
                   {txType === "investment" ? "Add Funds" : "Withdraw Funds"}
                 </button>
               </form>
