@@ -64,6 +64,7 @@ export default function InvestorPortal() {
       <div className="hidden print:block mb-8 border-b pb-4">
         <h1 className="text-3xl font-bold">Namma Trust</h1>
         <p className="text-gray-600">Investor Statement - Generated on {new Date().toLocaleDateString("en-IN")}</p>
+       <p className="text-sm text-gray-500 mt-2">Investor: {data.name} ({data.code})</p>
       </div>
 
       {/* PROFILE SECTION & PRINT BUTTON */}

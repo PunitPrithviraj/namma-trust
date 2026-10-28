@@ -116,7 +116,6 @@ function InvestorContent() {
   if (errorMsg) return <div className="p-8 text-red-600">Error: {errorMsg}</div>;
   if (!data) return <div className="p-8 text-red-600">Investor not found.</div>;
 
-  // --- Financial Calculations ---
   const totalInvestment = data.investments?.reduce((sum: number, inv: any) => sum + inv.amount, 0) || 0;
 
   let totalLoan = 0;
@@ -145,9 +144,11 @@ function InvestorContent() {
   return (
     <div className="p-8 max-w-6xl mx-auto">
       
-      <div className="hidden print:block mb-8 border-b pb-4">
+      {/* PRINT-ONLY HEADER */}
+      <div className="hidden print:block print-header mb-8 border-b pb-4">
         <h1 className="text-3xl font-bold">Namma Trust</h1>
         <p className="text-gray-600">Investor Statement - Generated on {new Date().toLocaleDateString("en-IN")}</p>
+        <p className="text-sm text-gray-500 mt-2">Investor: {data.name} ({data.code})</p>
       </div>
 
       <div className="mb-6 print:hidden">
@@ -201,7 +202,7 @@ function InvestorContent() {
               )}
             </div>
           </div>
-          <div className="flex gap-2 print:hidden">
+          <div className="flex gap-2">
             
             {/* PRINT BUTTON */}
             <button 
@@ -261,19 +262,19 @@ function InvestorContent() {
         <Link href={`/investors/${id}/investments`} className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:scale-[1.02] transition-transform cursor-pointer block">
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
           <p className="text-2xl font-bold text-gray-800 mt-1">₹{totalInvestment.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-blue-500 mt-2">View History &rarr;</p>
+          <p className="text-xs text-blue-500 mt-2 print:hidden">View History &rarr;</p>
         </Link>
         
         <Link href={`/investors/${id}/loans`} className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:scale-[1.02] transition-transform cursor-pointer block">
           <p className="text-sm font-medium text-gray-500">Total Loan (Active)</p>
           <p className="text-2xl font-bold text-blue-600 mt-1">₹{totalLoan.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-blue-500 mt-2">View Loans &rarr;</p>
+          <p className="text-xs text-blue-500 mt-2 print:hidden">View Loans &rarr;</p>
         </Link>
         
         <Link href={`/investors/${id}/profits`} className="bg-purple-50 p-5 rounded-lg shadow-sm border border-purple-200 hover:scale-[1.02] transition-transform cursor-pointer block">
           <p className="text-sm font-medium text-purple-700">Total Profit</p>
           <p className="text-2xl font-bold text-purple-800 mt-1">₹{totalProfit.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-purple-500 mt-2">View Profit History &rarr;</p>
+          <p className="text-xs text-purple-500 mt-2 print:hidden">View Profit History &rarr;</p>
         </Link>
       </div>
 

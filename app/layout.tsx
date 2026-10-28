@@ -3,6 +3,7 @@
 import { Suspense } from "react"; // <-- IMPORT SUSPENSE
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "./print.css"; 
 import Navbar from "@/components/Navbar";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
