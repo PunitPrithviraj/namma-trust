@@ -116,6 +116,7 @@ function InvestorContent() {
   if (errorMsg) return <div className="p-8 text-red-600">Error: {errorMsg}</div>;
   if (!data) return <div className="p-8 text-red-600">Investor not found.</div>;
 
+  // --- Financial Calculations ---
   const totalInvestment = data.investments?.reduce((sum: number, inv: any) => sum + inv.amount, 0) || 0;
 
   let totalLoan = 0;
@@ -144,13 +145,60 @@ function InvestorContent() {
   return (
     <div className="p-8 max-w-6xl mx-auto">
       
-      {/* PRINT-ONLY HEADER */}
-      <div className="hidden print:block print-header mb-8 border-b pb-4">
-        <h1 className="text-3xl font-bold">Namma Trust</h1>
-        <p className="text-gray-600">Investor Statement - Generated on {new Date().toLocaleDateString("en-IN")}</p>
-        <p className="text-sm text-gray-500 mt-2">Investor: {data.name} ({data.code})</p>
+      {/* --- CUSTOM PRINT HEADER --- */}
+      <div className="hidden print:block mb-6">
+        <div className="flex justify-between items-start border-b border-black pb-2">
+          
+          {/* Left: Namma Trust (Big) */}
+          <div>
+            <h1 className="text-4xl font-bold text-black uppercase tracking-wider">Namma Trust</h1>
+          </div>
+
+          {/* Right: Statement & Date (Small) */}
+          <div className="text-right">
+            <p className="text-sm font-bold text-gray-800 uppercase">Investor Statement</p>
+            <p className="text-xs text-gray-600">Generated: {new Date().toLocaleDateString("en-IN")}</p>
+          </div>
+        </div>
+
+        {/* Investor Details (Medium size) */}
+        <div className="mt-4 text-base font-semibold text-gray-800">
+          {data.name} {data.code ? `(${data.code})` : ""} 
+          <span className="text-sm font-normal text-gray-600 ml-2">
+            {data.phone} • Joined: {new Date(data.joinDate).toLocaleDateString("en-IN")}
+          </span>
+        </div>
+
+        {/* --- COMPACT PRINT-ONLY SUMMARY --- */}
+        <div className="mt-4 flex flex-wrap gap-x-8 gap-y-1 text-xs text-black border p-2 bg-gray-50 print:bg-white">
+          <div className="flex gap-2">
+            <span className="font-bold">Total Investment:</span>
+            <span>₹{totalInvestment.toLocaleString("en-IN")}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="font-bold">Total Loan:</span>
+            <span>₹{totalLoan.toLocaleString("en-IN")}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="font-bold">Outstanding Loan:</span>
+            <span>₹{pendingDues.toLocaleString("en-IN")}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="font-bold">Profit Earned:</span>
+            <span>₹{totalProfit.toLocaleString("en-IN")}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="font-bold">This Month Profit:</span>
+            <span>₹{thisMonthProfit.toLocaleString("en-IN")}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="font-bold">Current Balance:</span>
+            <span>₹{data.balance.toLocaleString("en-IN")}</span>
+          </div>
+        </div>
       </div>
 
+      {/* --- SCREEN HEADER --- */}
       <div className="mb-6 print:hidden">
         <Link href="/investors" className="text-blue-600 mb-4 hover:underline inline-block">
           &larr; Back to Investors
@@ -257,8 +305,8 @@ function InvestorContent() {
         </div>
       </div>
 
-      {/* CLICKABLE SUMMARY CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      {/* CLICKABLE SUMMARY CARDS (SCREEN ONLY) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 print:hidden">
         <Link href={`/investors/${id}/investments`} className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:scale-[1.02] transition-transform cursor-pointer block">
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
           <p className="text-2xl font-bold text-gray-800 mt-1">₹{totalInvestment.toLocaleString("en-IN")}</p>
@@ -278,7 +326,7 @@ function InvestorContent() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 print:hidden">
         <div className="bg-green-50 p-5 rounded-lg shadow-sm border border-green-200">
           <p className="text-sm font-medium text-green-700">Current Balance</p>
           <p className="text-2xl font-bold text-green-800 mt-1">₹{data.balance.toLocaleString("en-IN")}</p>

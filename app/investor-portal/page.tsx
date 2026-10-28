@@ -60,15 +60,57 @@ export default function InvestorPortal() {
   return (
     <div className="p-8 max-w-6xl mx-auto">
       
-      {/* PRINT-ONLY HEADER */}
-      <div className="hidden print:block mb-8 border-b pb-4">
-        <h1 className="text-3xl font-bold">Namma Trust</h1>
-        <p className="text-gray-600">Investor Statement - Generated on {new Date().toLocaleDateString("en-IN")}</p>
-       <p className="text-sm text-gray-500 mt-2">Investor: {data.name} ({data.code})</p>
+      {/* --- CUSTOM PRINT HEADER --- */}
+      <div className="hidden print:block mb-6">
+        <div className="flex justify-between items-start border-b border-black pb-2">
+          
+          {/* Left: Namma Trust (Big) */}
+          <div>
+            <h1 className="text-4xl font-bold text-black uppercase tracking-wider">Namma Trust</h1>
+          </div>
+
+          {/* Right: Statement & Date (Small) */}
+          <div className="text-right">
+            <p className="text-sm font-bold text-gray-800 uppercase">Investor Statement</p>
+            <p className="text-xs text-gray-600">Generated: {new Date().toLocaleDateString("en-IN")}</p>
+          </div>
+        </div>
+
+        {/* Investor Details (Medium size) */}
+        <div className="mt-4 text-base font-semibold text-gray-800">
+          {data.name} {data.code ? `(${data.code})` : ""} 
+          <span className="text-sm font-normal text-gray-600 ml-2">
+            {data.phone} • Joined: {new Date(data.joinDate).toLocaleDateString("en-IN")}
+          </span>
+        </div>
+
+        {/* --- COMPACT PRINT-ONLY SUMMARY --- */}
+        <div className="mt-4 flex flex-wrap gap-x-8 gap-y-1 text-xs text-black border p-2 bg-gray-50 print:bg-white">
+          <div className="flex gap-2">
+            <span className="font-bold">Total Investment:</span>
+            <span>₹{totalInvested.toLocaleString("en-IN")}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="font-bold">Outstanding Loan:</span>
+            <span>₹{outstandingLoan.toLocaleString("en-IN")}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="font-bold">Profit Earned:</span>
+            <span>₹{totalProfit.toLocaleString("en-IN")}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="font-bold">This Month Profit:</span>
+            <span>₹{thisMonthProfit.toLocaleString("en-IN")}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="font-bold">Current Balance:</span>
+            <span>₹{currentBalance.toLocaleString("en-IN")}</span>
+          </div>
+        </div>
       </div>
 
-      {/* PROFILE SECTION & PRINT BUTTON */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center print:border-none print:shadow-none print:p-0">
+      {/* --- SCREEN HEADER & PRINT BUTTON --- */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center print:hidden">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">{data.name}</h1>
           <p className="text-gray-500 mt-1">{data.email} • {data.phone}</p>
@@ -78,7 +120,7 @@ export default function InvestorPortal() {
           </div>
         </div>
         
-        <div className="mt-4 md:mt-0 flex flex-col items-end gap-2 print:hidden">
+        <div className="mt-4 md:mt-0 flex flex-col items-end gap-2">
           <div className="bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-bold">
             ACCOUNT ACTIVE
           </div>
@@ -93,8 +135,8 @@ export default function InvestorPortal() {
         </div>
       </div>
 
-      {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      {/* SUMMARY CARDS (SCREEN ONLY) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 print:hidden">
         <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-500">
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
           <p className="text-3xl font-bold text-gray-800 mt-2">₹{totalInvested.toLocaleString("en-IN")}</p>
@@ -111,7 +153,7 @@ export default function InvestorPortal() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:hidden">
         <div className="bg-green-50 p-6 rounded-lg shadow-sm border border-green-200">
           <p className="text-sm font-medium text-green-700">Current Wallet Balance</p>
           <p className="text-3xl font-bold text-green-800 mt-2">₹{currentBalance.toLocaleString("en-IN")}</p>
@@ -122,7 +164,7 @@ export default function InvestorPortal() {
         </div>
       </div>
 
-      {/* DETAILED TABLES FOR PRINTING */}
+      {/* DETAILED TABLES */}
       
       {/* 1. INVESTMENTS */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 print:shadow-none print:border-black">
