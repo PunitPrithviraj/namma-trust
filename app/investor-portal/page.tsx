@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 export default function InvestorPortal() {
   const { data: session, status } = useSession();
@@ -61,8 +60,14 @@ export default function InvestorPortal() {
   return (
     <div className="p-8 max-w-6xl mx-auto">
       
-      {/* PROFILE SECTION */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
+      {/* PRINT-ONLY HEADER */}
+      <div className="hidden print:block mb-8 border-b pb-4">
+        <h1 className="text-3xl font-bold">Namma Trust</h1>
+        <p className="text-gray-600">Investor Statement - Generated on {new Date().toLocaleDateString("en-IN")}</p>
+      </div>
+
+      {/* PROFILE SECTION & PRINT BUTTON */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center print:border-none print:shadow-none print:p-0">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">{data.name}</h1>
           <p className="text-gray-500 mt-1">{data.email} • {data.phone}</p>
@@ -71,33 +76,41 @@ export default function InvestorPortal() {
             <span>Joined: {new Date(data.joinDate).toLocaleDateString("en-IN")}</span>
           </div>
         </div>
-        <div className="mt-4 md:mt-0 bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-bold">
-          ACCOUNT ACTIVE
+        
+        <div className="mt-4 md:mt-0 flex flex-col items-end gap-2 print:hidden">
+          <div className="bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-bold">
+            ACCOUNT ACTIVE
+          </div>
+          
+          {/* PRINT BUTTON */}
+          <button 
+            onClick={() => window.print()}
+            className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 flex items-center gap-2"
+          >
+            🖨️ Print Full Statement
+          </button>
         </div>
       </div>
 
-      {/* CLICKABLE SUMMARY CARDS */}
+      {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Link href="/investor-portal/investments" className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-500 hover:scale-[1.02] transition-transform cursor-pointer block">
+        <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-500">
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
           <p className="text-3xl font-bold text-gray-800 mt-2">₹{totalInvested.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-blue-500 mt-3 font-medium">View History &rarr;</p>
-        </Link>
+        </div>
         
-        <Link href="/investor-portal/loans" className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-red-500 hover:scale-[1.02] transition-transform cursor-pointer block">
+        <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-red-500">
           <p className="text-sm font-medium text-gray-500">Outstanding Loan</p>
           <p className="text-3xl font-bold text-red-600 mt-2">₹{outstandingLoan.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-red-500 mt-3 font-medium">View Loans &rarr;</p>
-        </Link>
+        </div>
         
-        <Link href="/investor-portal/profits" className="bg-purple-50 p-6 rounded-lg shadow-sm border border-purple-200 hover:scale-[1.02] transition-transform cursor-pointer block">
+        <div className="bg-purple-50 p-6 rounded-lg shadow-sm border border-purple-200">
           <p className="text-sm font-medium text-purple-700">Total Profit Earned</p>
           <p className="text-3xl font-bold text-purple-800 mt-2">₹{totalProfit.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-purple-500 mt-3 font-medium">View Profit History &rarr;</p>
-        </Link>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="bg-green-50 p-6 rounded-lg shadow-sm border border-green-200">
           <p className="text-sm font-medium text-green-700">Current Wallet Balance</p>
           <p className="text-3xl font-bold text-green-800 mt-2">₹{currentBalance.toLocaleString("en-IN")}</p>
@@ -106,6 +119,95 @@ export default function InvestorPortal() {
           <p className="text-sm font-medium text-gray-500">This Month's Profit</p>
           <p className="text-3xl font-bold text-gray-800 mt-2">₹{thisMonthProfit.toLocaleString("en-IN")}</p>
         </div>
+      </div>
+
+      {/* DETAILED TABLES FOR PRINTING */}
+      
+      {/* 1. INVESTMENTS */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 print:shadow-none print:border-black">
+        <div className="p-4 border-b bg-gray-50 font-semibold text-blue-700 print:bg-white print:text-black">Investment History</div>
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 print:bg-white">
+            <tr>
+              <th className="text-left px-4 py-2 text-gray-500">Date</th>
+              <th className="text-left px-4 py-2 text-gray-500">Type</th>
+              <th className="text-right px-4 py-2 text-gray-500">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.investments.map((inv: any) => (
+              <tr key={inv.id} className="border-b">
+                <td className="px-4 py-3">{new Date(inv.date).toLocaleDateString("en-IN")}</td>
+                <td className="px-4 py-3 uppercase text-xs font-bold">{inv.type}</td>
+                <td className="px-4 py-3 text-right text-green-600 font-medium">+₹{inv.amount.toLocaleString("en-IN")}</td>
+              </tr>
+            ))}
+            {data.investments.length === 0 && <tr><td colSpan={3} className="p-4 text-center">No investments</td></tr>}
+          </tbody>
+        </table>
+      </div>
+
+      {/* 2. LOANS */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 print:shadow-none print:border-black">
+        <div className="p-4 border-b bg-gray-50 font-semibold text-red-700 print:bg-white print:text-black">Loan History</div>
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 print:bg-white">
+            <tr>
+              <th className="text-left px-4 py-2 text-gray-500">Loan ID</th>
+              <th className="text-left px-4 py-2 text-gray-500">Date</th>
+              <th className="text-right px-4 py-2 text-gray-500">Principal</th>
+              <th className="text-right px-4 py-2 text-gray-500">Outstanding</th>
+              <th className="text-left px-4 py-2 text-gray-500">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.loans.map((loan: any) => {
+              const firstPending = loan.schedule.find((s: any) => s.status === "pending");
+              const outstanding = firstPending ? firstPending.openingPrincipal : 0;
+              return (
+                <tr key={loan.id} className="border-b">
+                  <td className="px-4 py-3 font-mono">{loan.code || "N/A"}</td>
+                  <td className="px-4 py-3">{new Date(loan.startDate).toLocaleDateString("en-IN")}</td>
+                  <td className="px-4 py-3 text-right">₹{loan.principalAmount.toLocaleString("en-IN")}</td>
+                  <td className="px-4 py-3 text-right text-red-600 font-medium">₹{outstanding.toLocaleString("en-IN")}</td>
+                  <td className="px-4 py-3 uppercase text-xs font-bold">{loan.status}</td>
+                </tr>
+              );
+            })}
+            {data.loans.length === 0 && <tr><td colSpan={5} className="p-4 text-center">No loans</td></tr>}
+          </tbody>
+        </table>
+      </div>
+
+      {/* 3. PROFITS (HIGHLIGHTED) */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden print:shadow-none print:border-black">
+        <div className="p-4 border-b bg-purple-50 font-semibold text-purple-700 print:bg-white print:text-black">Profit Earned (Monthly)</div>
+        <table className="w-full text-sm">
+          <thead className="bg-purple-50 print:bg-white">
+            <tr>
+              <th className="text-left px-4 py-2 text-gray-500">Cycle Month</th>
+              <th className="text-right px-4 py-2 text-gray-500">Balance Used</th>
+              <th className="text-right px-4 py-2 text-gray-500 bg-yellow-100 print:bg-white">Profit Earned</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.profitDistributions.map((pd: any) => (
+              <tr key={pd.id} className="border-b">
+                <td className="px-4 py-3">{new Date(pd.cycle.cycleStart).toLocaleDateString("en-IN", { month: 'long', year: 'numeric' })}</td>
+                <td className="px-4 py-3 text-right text-gray-500">₹{pd.balanceUsed.toLocaleString("en-IN")}</td>
+                <td className="px-4 py-3 text-right font-bold text-green-600 bg-yellow-50 print:bg-white">+₹{pd.shareAmount.toLocaleString("en-IN")}</td>
+              </tr>
+            ))}
+            {data.profitDistributions.length === 0 && <tr><td colSpan={3} className="p-4 text-center">No profits yet</td></tr>}
+          </tbody>
+          {/* Total Profit Row */}
+          <tfoot>
+            <tr className="bg-yellow-100 print:bg-white border-t-2 border-black">
+              <td colSpan={2} className="px-4 py-3 text-right font-bold">Total Profit Earned:</td>
+              <td className="px-4 py-3 text-right font-bold text-green-700 text-lg">₹{totalProfit.toLocaleString("en-IN")}</td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
 
     </div>
