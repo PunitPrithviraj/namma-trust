@@ -201,8 +201,16 @@ function InvestorContent() {
               )}
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 print:hidden">
             
+            {/* PRINT BUTTON */}
+            <button 
+              onClick={() => window.print()}
+              className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900"
+            >
+              🖨️ Print
+            </button>
+
             {isAdmin && !data.user && (
               <button 
                 onClick={async () => {
@@ -236,13 +244,6 @@ function InvestorContent() {
               </span>
             )}
 
-            <button 
-              onClick={() => window.print()}
-              className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900"
-            >
-              🖨️ Print
-            </button>
-            
             {isAdmin && (
               <button 
                 onClick={handleDeleteInvestor}
