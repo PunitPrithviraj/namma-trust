@@ -10,15 +10,37 @@ function InvestorsListContent() {
   const [search, setSearch] = useState("");
   const router = useRouter();
 
+  async function fetchInvestors(query: string) {
+    try {
+      setLoading(true);
+      // Added cache: "no-store" to force fresh data
+      const res = await fetch(`/api/investors/search?q=${query}`, { cache: "no-store" });
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setInvestors(data);
+        } else {
+          console.error("Data is not an array:", data);
+          setInvestors([]);
+        }
+      } else {
+        console.error("API failed with status:", res.status);
+        const errorData = await res.json();
+        console.error("API Error details:", errorData);
+        setInvestors([]);
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setInvestors([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      setLoading(true);
-      fetch(`/api/investors/search?q=${search}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (Array.isArray(data)) setInvestors(data);
-        })
-        .finally(() => setLoading(false));
+      fetchInvestors(search);
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
