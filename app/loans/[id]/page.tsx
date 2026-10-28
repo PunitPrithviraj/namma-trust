@@ -172,7 +172,7 @@ function LoanContent() {
           <thead className="bg-gray-100 font-medium text-gray-700">
             <tr>
               <th className="px-4 py-3 text-left">Month</th>
-              <th className="px-4 py-3 text-left">Due Date</th> {/* <-- ADDED DUE DATE HEADER */}
+              <th className="px-4 py-3 text-left">Due Date</th>
               <th className="px-4 py-3 text-right">Opening Principal</th>
               <th className="px-4 py-3 text-right">Interest (1.5%)</th>
               <th className="px-4 py-3 text-right">Term Amount</th>
@@ -191,9 +191,8 @@ function LoanContent() {
                 <tr key={sch.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium">Month {sch.monthNo}</td>
                   
-                  {/* ADDED DUE DATE DATA */}
                   <td className="px-4 py-3 text-gray-600">
-                    {sch.dueDate ? new Date(sch.dueDate).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' }): "N/A"}
+                    {sch.dueDate ? new Date(sch.dueDate).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' }) : "N/A"}
                   </td>
                   
                   <td className="px-4 py-3 text-right">₹{sch.openingPrincipal.toLocaleString("en-IN")}</td>

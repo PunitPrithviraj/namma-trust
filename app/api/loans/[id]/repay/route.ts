@@ -19,14 +19,13 @@ export async function POST(
   if (!amount || amount <= 0) return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
 
   try {
-    // 1. Fetch loan and existing schedule
     const loan = await prisma.loan.findUnique({ 
       where: { id },
       include: { schedule: { orderBy: { monthNo: "asc" } } }
     });
     if (!loan) return NextResponse.json({ error: "Loan not found" }, { status: 404 });
 
-    // Prevent double processing by checking the latest repayment
+    // Prevent double processing
     const lastRepayment = await prisma.repayment.findFirst({
       where: { loanId: loan.id },
       orderBy: { paidDate: "desc" }
@@ -37,7 +36,7 @@ export async function POST(
       return NextResponse.json({ error: "Duplicate payment detected. Please wait." }, { status: 400 });
     }
 
-    // 2. Record the extra payment
+    // 1. Record the extra payment
     await prisma.repayment.create({
       data: {
         loanId: loan.id, 
@@ -50,14 +49,14 @@ export async function POST(
       }
     });
 
-    // 3. Calculate new principal
+    // 2. Calculate new principal
     const newPrincipal = Math.max(0, loan.principalAmount - amount);
     
-    // 4. Find where to start recalculating (first pending month)
+    // 3. Find where to start recalculating
     const firstPending = loan.schedule.find((s: any) => s.status === "pending");
     const startMonthNo = firstPending ? firstPending.monthNo : loan.schedule.length + 1;
 
-    // 5. Delete future pending schedules
+    // 4. Delete future pending schedules
     await prisma.loanSchedule.deleteMany({
       where: { 
         loanId: loan.id, 
@@ -65,17 +64,17 @@ export async function POST(
       }
     });
 
-    // 6. Recalculate remaining schedule
+    // 5. Recalculate remaining schedule
     let currentPrincipal = newPrincipal;
     let monthNo = startMonthNo;
     const newScheduleData = [];
     
-    // Set the first recalculated due date to the 9th of the current month (or next if 9th has passed)
-    const today = new Date();
-    let nextDueDate = new Date(today.getFullYear(), today.getMonth(), 9);
-    if (today.getDate() >= 9) {
-      nextDueDate.setMonth(nextDueDate.getMonth() + 1);
-    }
+    // Get the date of the last pending payment to calculate the next 9th
+    const lastPending = loan.schedule.find((s: any) => s.status === "pending");
+    const baseDate = lastPending ? new Date(lastPending.dueDate) : new Date(loan.startDate);
+    
+    // Set the first recalculated due date to the 9th of the following month
+    let nextDueDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 9);
 
     while (currentPrincipal > 0) {
       const interestAmount = currentPrincipal * 0.015;
@@ -106,10 +105,10 @@ export async function POST(
       nextDueDate.setMonth(nextDueDate.getMonth() + 1); // Move to next month's 9th
     }
 
-    // 7. Save new schedule
+    // 6. Save new schedule
     await prisma.loanSchedule.createMany({ data: newScheduleData });
 
-    // 8. Update loan status
+    // 7. Update loan status
     await prisma.loan.update({
       where: { id: loan.id },
       data: { 

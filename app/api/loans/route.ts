@@ -8,7 +8,7 @@ const loanSchema = z.object({
   investorId: z.string(),
   principalAmount: z.number().positive(),
   termAmount: z.number().positive(),
-  startDate: z.string(), // <-- Accept date from frontend
+  startDate: z.string(), // Accept date from frontend
 });
 
 export async function POST(req: Request) {
@@ -59,27 +59,27 @@ export async function POST(req: Request) {
     nextLoanCode = `LN-${String(lastNumber + 1).padStart(3, "0")}`;
   }
 
-  // 3. Create the Loan with the selected date
+  // 3. Create the Loan
   const loan = await prisma.loan.create({
     data: {
       code: nextLoanCode,
       investorId,
       principalAmount,
       termAmount,
-      startDate: new Date(startDate), // Save the custom date
+      startDate: new Date(startDate),
       status: "active",
     },
   });
 
-  // 4. Generate Schedule based on the selected date
+  // 4. Generate Schedule based strictly on the selected date
   let currentPrincipal = principalAmount;
   let monthNo = 1;
   const scheduleData = [];
 
-  // Get the loan date
+  // Parse the selected date from the frontend
   const loanDate = new Date(startDate);
   
-  // Set the first due date to the 9th of NEXT month relative to the loan date
+  // Set the first due date to the 9th of the FOLLOWING month
   let nextDueDate = new Date(loanDate.getFullYear(), loanDate.getMonth() + 1, 9);
 
   while (currentPrincipal > 0) {
