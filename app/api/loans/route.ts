@@ -8,6 +8,7 @@ const loanSchema = z.object({
   investorId: z.string(),
   principalAmount: z.number().positive(),
   termAmount: z.number().positive(),
+  startDate: z.string(), // <-- Accept date from frontend
 });
 
 export async function POST(req: Request) {
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
   if (!parsed.success)
     return NextResponse.json({ error: parsed.error.issues }, { status: 400 });
 
-  const { investorId, principalAmount, termAmount } = parsed.data;
+  const { investorId, principalAmount, termAmount, startDate } = parsed.data;
 
   // 1. Check trust funds
   const investors = await prisma.investor.findMany({
@@ -58,27 +59,28 @@ export async function POST(req: Request) {
     nextLoanCode = `LN-${String(lastNumber + 1).padStart(3, "0")}`;
   }
 
-  // 3. Create the Loan
+  // 3. Create the Loan with the selected date
   const loan = await prisma.loan.create({
     data: {
       code: nextLoanCode,
       investorId,
       principalAmount,
       termAmount,
+      startDate: new Date(startDate), // Save the custom date
       status: "active",
     },
   });
 
-  // 4. Generate Schedule (with 9th of the month due dates)
+  // 4. Generate Schedule based on the selected date
   let currentPrincipal = principalAmount;
   let monthNo = 1;
   const scheduleData = [];
 
-  // Get the current date
-  const today = new Date();
+  // Get the loan date
+  const loanDate = new Date(startDate);
   
-  // Set the first due date to the 9th of NEXT month
-  let nextDueDate = new Date(today.getFullYear(), today.getMonth() + 1, 9);
+  // Set the first due date to the 9th of NEXT month relative to the loan date
+  let nextDueDate = new Date(loanDate.getFullYear(), loanDate.getMonth() + 1, 9);
 
   while (currentPrincipal > 0) {
     const interestAmount = currentPrincipal * 0.015;
@@ -94,7 +96,7 @@ export async function POST(req: Request) {
     scheduleData.push({
       loanId: loan.id,
       monthNo,
-      dueDate: new Date(nextDueDate), // Set to 9th
+      dueDate: new Date(nextDueDate),
       openingPrincipal: currentPrincipal,
       interestAmount,
       termAmount: principalReduction,

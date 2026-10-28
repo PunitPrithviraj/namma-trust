@@ -7,16 +7,19 @@ export default function NewLoanPage() {
   const router = useRouter();
   const [investors, setInvestors] = useState<any[]>([]);
   
+  // Format today's date as YYYY-MM-DD for the HTML date input
+  const today = new Date().toISOString().split("T")[0];
+
   const [form, setForm] = useState({
     investorId: "",
     principalAmount: "",
     termAmount: "",
+    startDate: today, // Default to today
   });
   
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Fetch investors for the dropdown
   useEffect(() => {
     fetch("/api/investors")
       .then((r) => r.json())
@@ -37,14 +40,14 @@ export default function NewLoanPage() {
         investorId: form.investorId,
         principalAmount: Number(form.principalAmount),
         termAmount: Number(form.termAmount),
+        startDate: form.startDate, // Send custom date
       }),
     });
 
     setLoading(false);
 
     if (res.ok) {
-      const data = await res.json();
-      router.push(`/investors/${form.investorId}`); // redirect to their profile
+      router.push(`/investors/${form.investorId}`);
     } else {
       const data = await res.json();
       setError(typeof data.error === "string" ? data.error : "Failed to create loan");
@@ -75,6 +78,21 @@ export default function NewLoanPage() {
               </option>
             ))}
           </select>
+        </label>
+
+        {/* LOAN DATE PICKER */}
+        <label className="block">
+          <span className="text-sm font-medium">Loan Disbursement Date</span>
+          <input
+            type="date"
+            required
+            value={form.startDate}
+            onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+            className="mt-1 w-full border rounded px-3 py-2"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            The first EMI will be due on the 9th of the following month.
+          </p>
         </label>
 
         <label className="block">
