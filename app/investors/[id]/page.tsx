@@ -118,6 +118,7 @@ function InvestorContent() {
 
   // --- Financial Calculations ---
   const totalInvestment = data.investments?.reduce((sum: number, inv: any) => sum + inv.amount, 0) || 0;
+  const totalWithdrawn = data.withdrawals?.reduce((sum: number, w: any) => sum + w.amount, 0) || 0;
 
   let totalLoan = 0;
   let pendingDues = 0;
@@ -141,6 +142,9 @@ function InvestorContent() {
       thisMonthProfit += pd.shareAmount;
     }
   });
+
+  // --- NEW CALCULATION: Investment + Profit - Withdrawals ---
+  const customBalance = totalInvestment + totalProfit - totalWithdrawn;
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -175,7 +179,7 @@ function InvestorContent() {
           <div><strong>Outstanding Loan:</strong> ₹{pendingDues.toLocaleString("en-IN")}</div>
           <div><strong>Profit Earned:</strong> ₹{totalProfit.toLocaleString("en-IN")}</div>
           <div><strong>This Month Profit:</strong> ₹{thisMonthProfit.toLocaleString("en-IN")}</div>
-          <div><strong>Current Balance:</strong> ₹{data.balance.toLocaleString("en-IN")}</div>
+          <div><strong>Current Balance:</strong> ₹{customBalance.toLocaleString("en-IN")}</div>
         </div>
       </div>
 
@@ -310,7 +314,7 @@ function InvestorContent() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 print:hidden">
         <div className="bg-green-50 p-5 rounded-lg shadow-sm border border-green-200">
           <p className="text-sm font-medium text-green-700">Current Balance</p>
-          <p className="text-2xl font-bold text-green-800 mt-1">₹{data.balance.toLocaleString("en-IN")}</p>
+          <p className="text-2xl font-bold text-green-800 mt-1">₹{customBalance.toLocaleString("en-IN")}</p>
         </div>
         <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
           <p className="text-sm font-medium text-gray-500">Pending Dues</p>

@@ -36,7 +36,6 @@ export default function InvestorPortal() {
   // --- CALCULATIONS ---
   const totalInvested = data.investments.reduce((sum: number, inv: any) => sum + inv.amount, 0);
   const totalWithdrawn = data.withdrawals.reduce((sum: number, w: any) => sum + w.amount, 0);
-  const currentBalance = totalInvested - totalWithdrawn;
 
   let outstandingLoan = 0;
   data.loans.forEach((loan: any) => {
@@ -56,6 +55,9 @@ export default function InvestorPortal() {
       thisMonthProfit += pd.shareAmount;
     }
   });
+
+  // --- NEW CALCULATION: Investment + Profit - Withdrawals ---
+  const currentBalance = totalInvested + totalProfit - totalWithdrawn;
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
