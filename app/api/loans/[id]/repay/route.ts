@@ -19,13 +19,25 @@ export async function POST(
   if (!amount || amount <= 0) return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
 
   try {
+    // 1. Fetch loan and existing schedule
     const loan = await prisma.loan.findUnique({ 
       where: { id },
       include: { schedule: { orderBy: { monthNo: "asc" } } }
     });
     if (!loan) return NextResponse.json({ error: "Loan not found" }, { status: 404 });
 
-    // 1. Record the extra payment
+    // Prevent double processing by checking the latest repayment
+    const lastRepayment = await prisma.repayment.findFirst({
+      where: { loanId: loan.id },
+      orderBy: { paidDate: "desc" }
+    });
+    
+    if (lastRepayment && lastRepayment.amountPaid === amount && 
+       (new Date().getTime() - new Date(lastRepayment.paidDate).getTime() < 5000)) {
+      return NextResponse.json({ error: "Duplicate payment detected. Please wait." }, { status: 400 });
+    }
+
+    // 2. Record the extra payment
     await prisma.repayment.create({
       data: {
         loanId: loan.id, 
@@ -38,14 +50,14 @@ export async function POST(
       }
     });
 
-    // 2. Reduce the loan's main principal amount
+    // 3. Calculate new principal
     const newPrincipal = Math.max(0, loan.principalAmount - amount);
     
-    // 3. Find the first unpaid month to start recalculating from
+    // 4. Find where to start recalculating (first pending month)
     const firstPending = loan.schedule.find((s: any) => s.status === "pending");
     const startMonthNo = firstPending ? firstPending.monthNo : loan.schedule.length + 1;
 
-    // 4. Delete future pending schedules (we will regenerate them)
+    // 5. Delete future pending schedules
     await prisma.loanSchedule.deleteMany({
       where: { 
         loanId: loan.id, 
@@ -53,17 +65,16 @@ export async function POST(
       }
     });
 
-    // 5. Recalculate the remaining schedule
+    // 6. Recalculate remaining schedule
     let currentPrincipal = newPrincipal;
     let monthNo = startMonthNo;
     const newScheduleData = [];
     
-    // Set start date to the 9th of the current month
-    const now = new Date();
-    let dueDate = new Date(now.getFullYear(), now.getMonth(), 9);
-    // If the 9th has already passed this month, start from next month
-    if (now.getDate() >= 9) {
-      dueDate.setMonth(dueDate.getMonth() + 1);
+    // Set the first recalculated due date to the 9th of the current month (or next if 9th has passed)
+    const today = new Date();
+    let nextDueDate = new Date(today.getFullYear(), today.getMonth(), 9);
+    if (today.getDate() >= 9) {
+      nextDueDate.setMonth(nextDueDate.getMonth() + 1);
     }
 
     while (currentPrincipal > 0) {
@@ -80,7 +91,7 @@ export async function POST(
       newScheduleData.push({
         loanId: loan.id,
         monthNo,
-        dueDate: new Date(dueDate), // Set to 9th
+        dueDate: new Date(nextDueDate),
         openingPrincipal: currentPrincipal,
         interestAmount,
         termAmount: principalReduction,
@@ -92,13 +103,13 @@ export async function POST(
 
       currentPrincipal = closingPrincipal;
       monthNo++;
-      dueDate.setMonth(dueDate.getMonth() + 1); // Move to next month's 9th
+      nextDueDate.setMonth(nextDueDate.getMonth() + 1); // Move to next month's 9th
     }
 
-    // 6. Save the new schedule
+    // 7. Save new schedule
     await prisma.loanSchedule.createMany({ data: newScheduleData });
 
-    // 7. Update the loan (close if fully paid)
+    // 8. Update loan status
     await prisma.loan.update({
       where: { id: loan.id },
       data: { 
@@ -107,7 +118,7 @@ export async function POST(
       }
     });
 
-    await logAction((session.user as any).id, "CREATE", "Repayment", loan.id, `Extra principal repayment of ₹${amount} and schedule recalculated`);
+    await logAction((session.user as any).id, "CREATE", "Repayment", loan.id, `Extra principal repayment of ₹${amount} applied.`);
 
     return NextResponse.json({ success: true });
   } catch (error) {

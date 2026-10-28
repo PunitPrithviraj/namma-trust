@@ -75,6 +75,17 @@ export async function POST(req: Request) {
   const scheduleData = [];
 
   while (currentPrincipal > 0) {
+  let currentPrincipal = principalAmount;
+  let monthNo = 1;
+  const scheduleData = [];
+
+  // Get the current date
+  const today = new Date();
+  
+  // Set the first due date to the 9th of NEXT month
+  let nextDueDate = new Date(today.getFullYear(), today.getMonth() + 1, 9);
+
+  while (currentPrincipal > 0) {
     const interestAmount = currentPrincipal * 0.015;
     const extra1000 = 1000;
     let principalReduction = termAmount;
@@ -85,14 +96,10 @@ export async function POST(req: Request) {
 
     const closingPrincipal = currentPrincipal - principalReduction;
 
-    const dueDate = new Date();
-    dueDate.setMonth(dueDate.getMonth() + monthNo);
-    dueDate.setDate(1);
-
     scheduleData.push({
       loanId: loan.id,
       monthNo,
-      dueDate,
+      dueDate: new Date(nextDueDate), // <-- Uses the correct 9th date
       openingPrincipal: currentPrincipal,
       interestAmount,
       termAmount: principalReduction,
@@ -104,7 +111,10 @@ export async function POST(req: Request) {
 
     currentPrincipal = closingPrincipal;
     monthNo++;
-  }
+    
+    // Move to the 9th of the next month
+    nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+    }
 
   await prisma.loanSchedule.createMany({
     data: scheduleData,
