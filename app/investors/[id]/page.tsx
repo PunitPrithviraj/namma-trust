@@ -145,56 +145,37 @@ function InvestorContent() {
   return (
     <div className="p-8 max-w-6xl mx-auto">
       
-      {/* --- CUSTOM PRINT HEADER --- */}
+      {/* --- CUSTOM PRINT HEADER (INLINE STYLES) --- */}
       <div className="hidden print:block mb-6">
-        <div className="flex justify-between items-start border-b border-black pb-2">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid black', paddingBottom: '10px' }}>
           
           {/* Left: Namma Trust (Big) */}
           <div>
-            <h1 className="text-4xl font-bold text-black uppercase tracking-wider">Namma Trust</h1>
+            <h1 style={{ fontSize: '26pt', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, lineHeight: 1 }}>Namma Trust</h1>
           </div>
 
           {/* Right: Statement & Date (Small) */}
-          <div className="text-right">
-            <p className="text-sm font-bold text-gray-800 uppercase">Investor Statement</p>
-            <p className="text-xs text-gray-600">Generated: {new Date().toLocaleDateString("en-IN")}</p>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: '11pt', fontWeight: 'bold', textTransform: 'uppercase', margin: 0 }}>Investor Statement</p>
+            <p style={{ fontSize: '9pt', color: '#555', margin: 0 }}>Generated: {new Date().toLocaleDateString("en-IN")}</p>
           </div>
         </div>
 
         {/* Investor Details (Medium size) */}
-        <div className="mt-4 text-base font-semibold text-gray-800">
+        <div style={{ marginTop: '12px', fontSize: '13pt', fontWeight: 'bold', color: '#333' }}>
           {data.name} {data.code ? `(${data.code})` : ""} 
-          <span className="text-sm font-normal text-gray-600 ml-2">
+          <span style={{ fontSize: '10pt', fontWeight: 'normal', color: '#666', marginLeft: '10px' }}>
             {data.phone} • Joined: {new Date(data.joinDate).toLocaleDateString("en-IN")}
           </span>
         </div>
 
         {/* --- COMPACT PRINT-ONLY SUMMARY --- */}
-        <div className="mt-4 flex flex-wrap gap-x-8 gap-y-1 text-xs text-black border p-2 bg-gray-50 print:bg-white">
-          <div className="flex gap-2">
-            <span className="font-bold">Total Investment:</span>
-            <span>₹{totalInvestment.toLocaleString("en-IN")}</span>
-          </div>
-          <div className="flex gap-2">
-            <span className="font-bold">Total Loan:</span>
-            <span>₹{totalLoan.toLocaleString("en-IN")}</span>
-          </div>
-          <div className="flex gap-2">
-            <span className="font-bold">Outstanding Loan:</span>
-            <span>₹{pendingDues.toLocaleString("en-IN")}</span>
-          </div>
-          <div className="flex gap-2">
-            <span className="font-bold">Profit Earned:</span>
-            <span>₹{totalProfit.toLocaleString("en-IN")}</span>
-          </div>
-          <div className="flex gap-2">
-            <span className="font-bold">This Month Profit:</span>
-            <span>₹{thisMonthProfit.toLocaleString("en-IN")}</span>
-          </div>
-          <div className="flex gap-2">
-            <span className="font-bold">Current Balance:</span>
-            <span>₹{data.balance.toLocaleString("en-IN")}</span>
-          </div>
+        <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '24px', fontSize: '10pt', border: '1px solid #999', padding: '8px 12px', backgroundColor: '#f9f9f9' }}>
+          <div><strong>Total Investment:</strong> ₹{totalInvestment.toLocaleString("en-IN")}</div>
+          <div><strong>Outstanding Loan:</strong> ₹{pendingDues.toLocaleString("en-IN")}</div>
+          <div><strong>Profit Earned:</strong> ₹{totalProfit.toLocaleString("en-IN")}</div>
+          <div><strong>This Month Profit:</strong> ₹{thisMonthProfit.toLocaleString("en-IN")}</div>
+          <div><strong>Current Balance:</strong> ₹{data.balance.toLocaleString("en-IN")}</div>
         </div>
       </div>
 
