@@ -26,12 +26,11 @@ function LoanContent() {
       const data = await res.json();
       setLoan(data);
       
+      // Calculate the live principal (Original - all repayments)
       let livePrincipal = data.principalAmount;
       if (data.repayments && data.repayments.length > 0) {
-        const regularPrincipalPaid = data.repayments
-          .filter((r: any) => !r.notes?.includes("Extra Principal"))
-          .reduce((sum: number, r: any) => sum + r.principalPart, 0);
-        livePrincipal -= regularPrincipalPaid;
+        const totalPrincipalPaid = data.repayments.reduce((sum: number, r: any) => sum + r.principalPart, 0);
+        livePrincipal -= totalPrincipalPaid;
       }
       setCurrentPrincipal(Math.max(0, livePrincipal));
     }
