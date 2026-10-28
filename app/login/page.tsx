@@ -13,31 +13,59 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    const res = await signIn("credentials", {
-      identifier, // <-- Send the identifier
-      password,
-      redirect: false,
-    });
+    try {
+      const res = await signIn("credentials", {
+        identifier: identifier.trim(),
+        password,
+        redirect: false,
+      });
 
-    setLoading(false);
-
-    if (res?.error) {
-      setError(res.error === "CredentialsSignin" ? "Invalid email/phone or password" : res.error);
-    } else {
-      const sessionRes = await fetch("/api/auth/session");
-      const session = await sessionRes.json();
-      
-      if (session?.user?.role === "investor") {
-        router.push("/investor-portal");
-      } else {
-        router.push("/dashboard");
+      if (!res || res.error || !res.ok) {
+        setError(
+          res?.error === "CredentialsSignin"
+            ? "Invalid email/phone or password"
+            : res?.error || "Login failed. Please try again."
+        );
+        return;
       }
+
+      // Retrieve the session after successful authentication.
+      const sessionRes = await fetch("/api/auth/session", {
+        cache: "no-store",
+      });
+
+      if (!sessionRes.ok) {
+        setError("Login succeeded, but the session could not be loaded. Please try again.");
+        return;
+      }
+
+      const session = await sessionRes.json();
+
+      if (!session?.user) {
+        setError("Your session could not be verified. Please sign in again.");
+        return;
+      }
+
+      if (session.user.forcePasswordReset) {
+        router.replace("/change-password");
+      } else if (session.user.role === "investor") {
+        router.replace("/investor-portal");
+      } else {
+        router.replace("/dashboard");
+      }
+
       router.refresh();
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Unable to complete login. Please try again.");
+    } finally {
+      setLoading(false);
     }
   }
 
