@@ -10,11 +10,11 @@ const txSchema = z.object({
   amount: z.number().positive(),
   type: z.enum(["investment", "withdrawal"]),
   notes: z.string().optional(),
+  date: z.string().optional(), // <-- Accept custom date
 });
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  // SECURITY CHECK
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if ((session.user as any).role !== "admin")
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -24,11 +24,12 @@ export async function POST(req: Request) {
   if (!parsed.success)
     return NextResponse.json({ error: parsed.error.issues }, { status: 400 });
 
-  const { investorId, amount, type, notes } = parsed.data;
+  const { investorId, amount, type, notes, date } = parsed.data;
+  const txDate = date ? new Date(date) : new Date();
 
   if (type === "investment") {
     await prisma.investment.create({
-      data: { investorId, amount, type: "topup", notes },
+      data: { investorId, amount, type: "topup", notes, date: txDate },
     });
   } else {
     const invs = await prisma.investment.findMany({ where: { investorId } });
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
     }
 
     await prisma.withdrawal.create({
-      data: { investorId, amount, notes },
+      data: { investorId, amount, notes, date: txDate },
     });
   }
 
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
     type === "investment" ? "CREATE" : "DELETE",
     "Transaction",
     investorId,
-    `${type === "investment" ? "Added" : "Withdrew"} ₹${amount}`
+    `${type === "investment" ? "Added" : "Withdrew"} ₹${amount} on ${txDate.toLocaleDateString()}`
   );
 
   return NextResponse.json({ success: true });

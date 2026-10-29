@@ -20,6 +20,7 @@ function InvestorContent() {
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [txType, setTxType] = useState<"investment" | "withdrawal">("investment");
+  const [txDate, setTxDate] = useState(new Date().toISOString().split("T")[0]); // <-- Default to today
   const [error, setError] = useState("");
 
   async function load() {
@@ -68,6 +69,7 @@ function InvestorContent() {
         amount: Number(amount),
         type: txType,
         notes,
+        date: txDate, // <-- Send the selected date
       }),
     });
 
@@ -380,14 +382,28 @@ function InvestorContent() {
                     <option value="withdrawal">Withdraw Funds</option>
                   </select>
                 </label>
+                
                 <label className="block">
                   <span className="text-sm font-medium text-gray-700">Amount (₹)</span>
                   <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required min="1" className="mt-1 w-full border rounded px-3 py-2" />
                 </label>
+
+                <label className="block">
+                  <span className="text-sm font-medium text-gray-700">Transaction Date</span>
+                  <input 
+                    type="date" 
+                    value={txDate} 
+                    onChange={(e) => setTxDate(e.target.value)} 
+                    required 
+                    className="mt-1 w-full border rounded px-3 py-2" 
+                  />
+                </label>
+
                 <label className="block">
                   <span className="text-sm font-medium text-gray-700">Notes (Optional)</span>
                   <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} className="mt-1 w-full border rounded px-3 py-2" />
                 </label>
+                
                 <button type="submit" className={`w-full py-2 rounded text-white font-medium ${txType === "investment" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}>
                   {txType === "investment" ? "Add Funds" : "Withdraw Funds"}
                 </button>

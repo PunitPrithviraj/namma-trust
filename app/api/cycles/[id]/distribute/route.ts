@@ -8,44 +8,44 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if ((session.user as any).role !== "admin")
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!session || (session.user as any).role !== "admin")
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
 
-  // 1. Verify the cycle exists and isn't already distributed
-  const cycle = await prisma.monthlyCycle.findUnique({
-    where: { id }
-  });
-
+  const cycle = await prisma.monthlyCycle.findUnique({ where: { id } });
   if (!cycle) return NextResponse.json({ error: "Cycle not found" }, { status: 404 });
   if (cycle.status === "distributed") {
     return NextResponse.json({ error: "Profit already distributed for this month." }, { status: 400 });
   }
 
-  // 2. Get all investors and their total balance
+  // 1. Fetch all investors with their full history
   const investors = await prisma.investor.findMany({
     include: {
       investments: true,
       withdrawals: true,
+      profitDistributions: true, // <-- Fetch past profits
     },
   });
 
   let totalTrustBalance = 0;
   const investorBalances = investors.map((inv) => {
-    const invested = inv.investments.reduce((s, i) => s + i.amount, 0);
-    const withdrawn = inv.withdrawals.reduce((s, w) => s + w.amount, 0);
-    const balance = invested - withdrawn;
-    totalTrustBalance += balance;
-    return { investorId: inv.id, balance };
+    const totalInvested = inv.investments.reduce((s, i) => s + i.amount, 0);
+    const totalWithdrawn = inv.withdrawals.reduce((s, w) => s + w.amount, 0);
+    const totalProfitEarned = inv.profitDistributions.reduce((s, p) => s + p.shareAmount, 0);
+    
+    // ✅ CALCULATION: Total Investment + Total Profit - Total Withdrawals
+    const currentBalance = Math.max(0, totalInvested + totalProfitEarned - totalWithdrawn);
+    
+    totalTrustBalance += currentBalance;
+    return { investorId: inv.id, balance: currentBalance };
   });
 
   if (totalTrustBalance === 0) {
     return NextResponse.json({ error: "No funds in trust to calculate profit." }, { status: 400 });
   }
 
-  // 3. Calculate distributions
+  // 2. Distribute profit proportionally based on the new current balance
   const distributions = investorBalances
     .filter((ib) => ib.balance > 0)
     .map((ib) => {
@@ -53,25 +53,17 @@ export async function POST(
       return {
         cycleId: cycle.id,
         investorId: ib.investorId,
-        balanceUsed: ib.balance,
-        shareAmount: Math.round(shareAmount * 100) / 100, // round to 2 decimals
-        status: "paid", // Automatically mark as paid for now
+        balanceUsed: ib.balance, // Storing the new balance used
+        shareAmount: Math.round(shareAmount * 100) / 100,
+        status: "paid",
       };
     });
 
-  // 4. Save the distributions
-  await prisma.profitDistribution.createMany({
-    data: distributions,
-  });
-
-  // 5. Update the cycle status
+  await prisma.profitDistribution.createMany({ data: distributions });
+  
   await prisma.monthlyCycle.update({
     where: { id: cycle.id },
-    data: { 
-      status: "distributed",
-      totalDistributed: cycle.totalInterestCollected,
-      distributedAt: new Date()
-    },
+    data: { status: "distributed", totalDistributed: cycle.totalInterestCollected, distributedAt: new Date() },
   });
 
   return NextResponse.json({ success: true, distributed: distributions.length });
