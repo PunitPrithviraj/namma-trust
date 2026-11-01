@@ -39,13 +39,16 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    await prisma.repayment.deleteMany({ where: { loanId: id } });
-    await prisma.loanSchedule.deleteMany({ where: { loanId: id } });
-    await prisma.investment.deleteMany({ where: { sourceLoanId: id } });
-    await prisma.loan.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.repayment.deleteMany({ where: { loanId: id } }),
+      prisma.loanSchedule.deleteMany({ where: { loanId: id } }),
+      prisma.investment.deleteMany({ where: { sourceLoanId: id } }),
+      prisma.loan.delete({ where: { id } })
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Loan delete error:", error);
     return NextResponse.json({ error: "Failed to delete loan" }, { status: 500 });
   }
 }

@@ -21,7 +21,15 @@ function LoansContent() {
     fetch(`/api/loans/list?q=${search}${statusQuery}`)
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) setLoans(data);
+        if (Array.isArray(data)) {
+          // 👈 SORT BY LOAN ID (CODE) ASCENDING
+          const sortedData = data.sort((a, b) => {
+            const codeA = a.code || "";
+            const codeB = b.code || "";
+            return codeA.localeCompare(codeB);
+          });
+          setLoans(sortedData);
+        }
       })
       .finally(() => setLoading(false));
   }, [search, statusFilter]);

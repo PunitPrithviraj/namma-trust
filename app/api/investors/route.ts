@@ -19,7 +19,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const investors = await prisma.investor.findMany({
-    orderBy: { createdAt: "desc" },
+    orderBy: { code: "asc" }, // 👈 Changed to sort by Investor ID
     include: {
       investments: true,
       withdrawals: true,
@@ -77,3 +77,4 @@ export async function POST(req: Request) {
     );
   }
 }
+

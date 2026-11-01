@@ -93,9 +93,14 @@ function InvestorContent() {
     }
   }
 
-  async function handleDeleteTransaction(txId: string) {
-    if (!confirm("Delete this transaction? The balance will be recalculated.")) return;
-    const res = await fetch(`/api/transactions/${txId}`, { method: "DELETE" });
+  async function handleDeleteTransaction(tx: any) {
+    const isMonthly = tx.type === "monthly" || tx.notes === "Monthly ₹1,000 Admin Entry";
+    const msg = isMonthly 
+      ? "Are you sure you want to delete this ₹1,000 monthly investment transaction? This amount will be removed from the investor's regular investment and Trust fund calculations."
+      : "Delete this transaction? The balance will be recalculated.";
+      
+    if (!confirm(msg)) return;
+    const res = await fetch(`/api/transactions/${tx.id}`, { method: "DELETE" });
     if (res.ok) load();
     else alert("Failed to delete transaction");
   }
@@ -145,42 +150,11 @@ function InvestorContent() {
     }
   });
 
-  // ✅ Current Balance = Investment + Profit - Withdrawals
   const customBalance = totalInvestment + totalProfit - totalWithdrawn;
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
       
-      {/* --- CUSTOM PRINT HEADER (INLINE STYLES) --- */}
-      <div className="hidden print:block mb-6">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid black', paddingBottom: '10px' }}>
-          
-          <div>
-            <h1 style={{ fontSize: '26pt', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, lineHeight: 1 }}>Namma Trust</h1>
-          </div>
-
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: '11pt', fontWeight: 'bold', textTransform: 'uppercase', margin: 0 }}>Investor Statement</p>
-            <p style={{ fontSize: '9pt', color: '#555', margin: 0 }}>Generated: {new Date().toLocaleDateString("en-IN")}</p>
-          </div>
-        </div>
-
-        <div style={{ marginTop: '12px', fontSize: '13pt', fontWeight: 'bold', color: '#333' }}>
-          {data.name} {data.code ? `(${data.code})` : ""} 
-          <span style={{ fontSize: '10pt', fontWeight: 'normal', color: '#666', marginLeft: '10px' }}>
-            {data.phone} • Joined: {new Date(data.joinDate).toLocaleDateString("en-IN")}
-          </span>
-        </div>
-
-        <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '24px', fontSize: '10pt', border: '1px solid #999', padding: '8px 12px', backgroundColor: '#f9f9f9' }}>
-          <div><strong>Total Investment:</strong> ₹{totalInvestment.toLocaleString("en-IN")}</div>
-          <div><strong>Outstanding Loan:</strong> ₹{pendingDues.toLocaleString("en-IN")}</div>
-          <div><strong>Profit Earned:</strong> ₹{totalProfit.toLocaleString("en-IN")}</div>
-          <div><strong>This Month Profit:</strong> ₹{thisMonthProfit.toLocaleString("en-IN")}</div>
-          <div><strong>Current Balance:</strong> ₹{customBalance.toLocaleString("en-IN")}</div>
-        </div>
-      </div>
-
       {/* --- SCREEN HEADER --- */}
       <div className="mb-6 print:hidden">
         <Link href="/investors" className="text-blue-600 mb-4 hover:underline inline-block">
@@ -194,92 +168,18 @@ function InvestorContent() {
                 <span className="text-sm font-mono text-gray-600">
                   {data.code || "NO-ID"}
                 </span>
-                {isAdmin && (
-                  <button 
-                    onClick={async () => {
-                      const newCode = prompt("Enter new Investor ID (e.g. INV-005):", data.code || "");
-                      if (newCode && newCode !== data.code) {
-                        const res = await fetch(`/api/investors/${id}/update`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ code: newCode }),
-                        });
-                        if (res.ok) load();
-                        else {
-                          const err = await res.json();
-                          alert(err.error || "Failed to update ID");
-                        }
-                      }
-                    }}
-                    className="text-blue-500 hover:text-blue-700 p-1"
-                    title="Edit ID"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                  </button>
-                )}
               </div>
             </h1>
             <div className="flex items-center gap-2 mt-1">
               <p className="text-gray-500">{data.phone} • Joined {new Date(data.joinDate).toLocaleDateString("en-IN")}</p>
-              
-              {isAdmin && (
-                <button 
-                  onClick={handleEditJoinDate}
-                  className="text-blue-500 hover:text-blue-700 p-1 rounded hover:bg-blue-50 transition-colors"
-                  title="Edit Joining Date"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                </button>
-              )}
             </div>
           </div>
           <div className="flex gap-2">
-            
-            <button 
-              onClick={() => window.print()}
-              className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900"
-            >
+            <button onClick={() => window.print()} className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900">
               🖨️ Print
             </button>
-
-            {isAdmin && !data.user && (
-              <button 
-                onClick={async () => {
-                  const email = prompt("Enter login email for investor:", data.email || "");
-                  const password = prompt("Enter a password (min 6 chars):");
-                  if (!email || !password) return;
-
-                  const res = await fetch(`/api/investors/${id}/create-login`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, password }),
-                  });
-                  
-                  if (res.ok) {
-                    alert("Login created successfully!");
-                    load();
-                  } else {
-                    const err = await res.json();
-                    alert(err.error);
-                  }
-                }}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              >
-                Create Login
-              </button>
-            )}
-            
-            {data.user && (
-              <span className="bg-green-100 text-green-800 px-3 py-2 rounded text-sm font-medium">
-                Login: {data.user.email}
-              </span>
-            )}
-
             {isAdmin && (
-              <button 
-                onClick={handleDeleteInvestor}
-                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-              >
+              <button onClick={handleDeleteInvestor} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
                 Delete Investor
               </button>
             )}
@@ -289,23 +189,18 @@ function InvestorContent() {
 
       {/* CLICKABLE SUMMARY CARDS (SCREEN ONLY) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 print:hidden">
-        <Link href={`/investors/${id}/investments`} className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:scale-[1.02] transition-transform cursor-pointer block">
+        <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
           <p className="text-2xl font-bold text-gray-800 mt-1">₹{totalInvestment.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-blue-500 mt-2 print:hidden">View History &rarr;</p>
-        </Link>
-        
-        <Link href={`/investors/${id}/loans`} className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:scale-[1.02] transition-transform cursor-pointer block">
+        </div>
+        <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
           <p className="text-sm font-medium text-gray-500">Total Loan (Active)</p>
           <p className="text-2xl font-bold text-blue-600 mt-1">₹{totalLoan.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-blue-500 mt-2 print:hidden">View Loans &rarr;</p>
-        </Link>
-        
-        <Link href={`/investors/${id}/profits`} className="bg-purple-50 p-5 rounded-lg shadow-sm border border-purple-200 hover:scale-[1.02] transition-transform cursor-pointer block">
+        </div>
+        <div className="bg-purple-50 p-5 rounded-lg shadow-sm border border-purple-200">
           <p className="text-sm font-medium text-purple-700">Total Profit</p>
           <p className="text-2xl font-bold text-purple-800 mt-1">₹{totalProfit.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-purple-500 mt-2 print:hidden">View Profit History &rarr;</p>
-        </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 print:hidden">
@@ -342,23 +237,26 @@ function InvestorContent() {
                   ...data.withdrawals.map((w:any)=>({...w, type:"Withdrawal", color:"text-red-600"}))]
                   .sort((a,b)=> new Date(b.date).getTime() - new Date(a.date).getTime())
                   .slice(0, 5)
-                  .map((tx: any) => (
+                  .map((tx: any) => {
+                  const isMonthly = tx.type === "monthly" || tx.notes === "Monthly ₹1,000 Admin Entry";
+                  return (
                   <tr key={tx.id} className="border-t hover:bg-gray-50">
                     <td className="px-4 py-2 text-sm">{new Date(tx.date).toLocaleDateString()}</td>
-                    <td className={`px-4 py-2 text-sm font-medium ${tx.color}`}>{tx.type}</td>
+                    <td className={`px-4 py-2 text-sm font-medium ${isMonthly ? "text-purple-600" : tx.color}`}>
+                      {isMonthly ? "Monthly Investment" : tx.type}
+                    </td>
                     <td className={`px-4 py-2 text-right font-medium ${tx.color}`}>
                       {tx.type === "Withdrawal" ? "-" : "+"}₹{tx.amount.toLocaleString("en-IN")}
                     </td>
                     {isAdmin && (
                       <td className="px-4 py-2 text-right print:hidden">
                         <div className="flex justify-end gap-3">
-                          <button onClick={() => handleEditTransaction(tx)} className="text-blue-600 hover:text-blue-800 text-xs font-bold">Edit</button>
-                          <button onClick={() => handleDeleteTransaction(tx.id)} className="text-red-500 hover:text-red-700 text-xs font-bold">Delete</button>
+                          <button onClick={() => handleDeleteTransaction(tx)} className="text-red-500 hover:text-red-700 text-xs font-bold">Delete</button>
                         </div>
                       </td>
                     )}
                   </tr>
-                ))}
+                )})}
                 {data.investments.length === 0 && data.withdrawals.length === 0 && (
                   <tr><td colSpan={isAdmin ? 4 : 3} className="p-4 text-center text-gray-500">No transactions yet</td></tr>
                 )}
@@ -390,13 +288,7 @@ function InvestorContent() {
 
                 <label className="block">
                   <span className="text-sm font-medium text-gray-700">Transaction Date</span>
-                  <input 
-                    type="date" 
-                    value={txDate} 
-                    onChange={(e) => setTxDate(e.target.value)} 
-                    required 
-                    className="mt-1 w-full border rounded px-3 py-2" 
-                  />
+                  <input type="date" value={txDate} onChange={(e) => setTxDate(e.target.value)} required className="mt-1 w-full border rounded px-3 py-2" />
                 </label>
 
                 <label className="block">

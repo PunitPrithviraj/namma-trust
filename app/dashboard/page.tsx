@@ -76,12 +76,15 @@ async function DashboardContent() {
       {/* DASHBOARD CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         
-        {/* 1. Total Investment (Regular + Profit) */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500">
+        {/* 1. Total Investment (Regular + Profit) - CLICKABLE */}
+        <Link 
+          href="/dashboard/total-investment" 
+          className="block bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500 hover:scale-[1.02] transition-transform cursor-pointer"
+        >
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
           <p className="text-3xl font-bold text-gray-800 mt-2">₹{totalInvestment.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-gray-400 mt-2">Includes Accrued Profit</p>
-        </div>
+          <p className="text-xs text-blue-500 mt-2 font-medium">View Breakdown &rarr;</p>
+        </Link>
 
         {/* 2. Total Team Regular Investment */}
         <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-500">

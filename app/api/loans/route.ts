@@ -14,6 +14,26 @@ const loanSchema = z.object({
   notes: z.string().optional(),
 });
 
+// GET: List all loans, sorted by Loan ID (Code)
+export async function GET(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
+    const loans = await prisma.loan.findMany({
+      orderBy: { code: "asc" }, // 👈 Default sort by Loan ID
+      include: {
+        investor: true,
+        schedule: { orderBy: { monthNo: "asc" } },
+      },
+    });
+    return NextResponse.json(loans);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to fetch loans" }, { status: 500 });
+  }
+}
+
+// POST: Create Loan with Trust Fund Validation
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session || (session.user as any).role !== "admin")
@@ -30,43 +50,104 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Monthly principal × term is less than total loan. Increase term or monthly amount." }, { status: 400 });
   }
 
-  // Code Generation
-  const lastLoan = await prisma.loan.findFirst({ where: { code: { startsWith: "LN-" } }, orderBy: { code: "desc" } });
-  const nextCode = lastLoan?.code ? `LN-${String(parseInt(lastLoan.code.replace("LN-", ""), 10) + 1).padStart(3, "0")}` : "LN-001";
+  try {
+    // Use a transaction to prevent race conditions
+    const newLoanId = await prisma.$transaction(async (tx) => {
+      // 1. Calculate Available Trust Funds
+      const totalInvestments = await tx.investment.aggregate({ _sum: { amount: true } });
+      const totalWithdrawals = await tx.withdrawal.aggregate({ _sum: { amount: true } });
 
-  // Create Loan
-  const loan = await prisma.loan.create({
-    data: { code: nextCode, investorId, principalAmount, termAmount, interestRate, loanTerm, startDate: new Date(startDate), notes, status: "active" }
-  });
+      const activeLoans = await tx.loan.findMany({
+        where: { status: "active" },
+        include: { schedule: true },
+      });
 
-  // Generate Schedule (Math uses 1.5% on outstanding)
-  let currentPrincipal = principalAmount;
-  let monthNo = 1;
-  const scheduleData = [];
-  
-  // First due date: 9th of next month
-  const loanDate = new Date(startDate);
-  let nextDueDate = new Date(loanDate.getFullYear(), loanDate.getMonth() + 1, 9);
+      let totalActiveOutstanding = 0;
+      activeLoans.forEach((loan) => {
+        const lastSchedule = loan.schedule[loan.schedule.length - 1];
+        totalActiveOutstanding += lastSchedule ? lastSchedule.closingPrincipal : loan.principalAmount;
+      });
 
-  while (currentPrincipal > 0) {
-    const interestAmount = Number((currentPrincipal * (interestRate / 100)).toFixed(2));
-    let principalReduction = termAmount;
-    if (currentPrincipal < termAmount) principalReduction = currentPrincipal;
+      const availableFunds =
+        (totalInvestments._sum.amount || 0) -
+        (totalWithdrawals._sum.amount || 0) -
+        totalActiveOutstanding;
 
-    const closingPrincipal = Number((currentPrincipal - principalReduction).toFixed(2));
+      // 2. Validate against requested amount
+      if (principalAmount > availableFunds) {
+        throw new Error(
+          `Insufficient Trust Funds. Available: ₹${availableFunds.toLocaleString("en-IN")}, Requested: ₹${principalAmount.toLocaleString("en-IN")}, Shortfall: ₹${(principalAmount - availableFunds).toLocaleString("en-IN")}`
+        );
+      }
 
-    scheduleData.push({
-      loanId: loan.id, monthNo, dueDate: new Date(nextDueDate),
-      openingPrincipal: currentPrincipal, interestAmount,
-      termAmount: principalReduction, extra1000: 1000, // Compulsory investment retained
-      extraRepayment: 0, closingPrincipal, status: "pending",
+      // 3. Code Generation
+      const lastLoan = await tx.loan.findFirst({
+        where: { code: { startsWith: "LN-" } },
+        orderBy: { code: "desc" },
+      });
+      const nextCode = lastLoan?.code
+        ? `LN-${String(parseInt(lastLoan.code.replace("LN-", ""), 10) + 1).padStart(3, "0")}`
+        : "LN-001";
+
+      // 4. Create Loan
+      const loan = await tx.loan.create({
+        data: {
+          code: nextCode,
+          investorId,
+          principalAmount,
+          termAmount,
+          interestRate,
+          loanTerm,
+          startDate: new Date(startDate),
+          notes,
+          status: "active",
+        },
+      });
+
+      // 5. Generate Schedule (Math uses 1.5% on outstanding)
+      let currentPrincipal = principalAmount;
+      let monthNo = 1;
+      const scheduleData = [];
+
+      // First due date: 9th of next month
+      const loanDate = new Date(startDate);
+      let nextDueDate = new Date(loanDate.getFullYear(), loanDate.getMonth() + 1, 9);
+
+      while (currentPrincipal > 0) {
+        const interestAmount = Number((currentPrincipal * (interestRate / 100)).toFixed(2));
+        let principalReduction = termAmount;
+        if (currentPrincipal < termAmount) principalReduction = currentPrincipal;
+
+        const closingPrincipal = Number((currentPrincipal - principalReduction).toFixed(2));
+
+        scheduleData.push({
+          loanId: loan.id,
+          monthNo,
+          dueDate: new Date(nextDueDate),
+          openingPrincipal: currentPrincipal,
+          interestAmount,
+          termAmount: principalReduction,
+          extra1000: 1000,
+          extraRepayment: 0,
+          closingPrincipal,
+          status: "pending",
+        });
+
+        currentPrincipal = closingPrincipal;
+        monthNo++;
+        nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+      }
+
+      await tx.loanSchedule.createMany({ data: scheduleData });
+      return loan.id;
     });
 
-    currentPrincipal = closingPrincipal;
-    monthNo++;
-    nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+    return NextResponse.json({ success: true, loanId: newLoanId });
+  } catch (error: any) {
+    console.error("Loan creation error:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to create loan" },
+      { status: 400 }
+    );
   }
-
-  await prisma.loanSchedule.createMany({ data: scheduleData });
-  return NextResponse.json({ success: true, loanId: loan.id });
 }

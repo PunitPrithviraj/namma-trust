@@ -175,15 +175,15 @@ function LoanContent() {
               <th className="px-4 py-3 text-right">Opening Principal</th>
               <th className="px-4 py-3 text-right">Interest (1.5%)</th>
               <th className="px-4 py-3 text-right">Term Amount</th>
-              <th className="px-4 py-3 text-right">+ ₹1000 Inv</th>
-              <th className="px-4 py-3 text-right">Total Due</th>
+              <th className="px-4 py-3 text-right">EMI (To Pay)</th>
               <th className="px-4 py-3 text-right">Closing Principal</th>
               <th className="px-4 py-3 text-center">Status</th>
             </tr>
           </thead>
           <tbody>
             {loan.schedule.map((sch: any) => {
-              const totalDue = sch.interestAmount + sch.termAmount + sch.extra1000;
+              // 👈 EMI is now strictly Term + Interest
+              const emiAmount = sch.termAmount + sch.interestAmount;
               const repayment = loan.repayments?.find((r: any) => r.scheduleId === sch.id);
               
               return (
@@ -197,8 +197,10 @@ function LoanContent() {
                   <td className="px-4 py-3 text-right">₹{sch.openingPrincipal.toLocaleString("en-IN")}</td>
                   <td className="px-4 py-3 text-right text-red-600">₹{sch.interestAmount.toLocaleString("en-IN", {maximumFractionDigits:0})}</td>
                   <td className="px-4 py-3 text-right">₹{sch.termAmount.toLocaleString("en-IN")}</td>
-                  <td className="px-4 py-3 text-right text-blue-600">₹{sch.extra1000.toLocaleString("en-IN")}</td>
-                  <td className="px-4 py-3 text-right font-bold">₹{totalDue.toLocaleString("en-IN", {maximumFractionDigits:0})}</td>
+                  
+                  {/* 👈 Display EMI amount */}
+                  <td className="px-4 py-3 text-right font-bold">₹{emiAmount.toLocaleString("en-IN", {maximumFractionDigits:0})}</td>
+                  
                   <td className="px-4 py-3 text-right">₹{sch.closingPrincipal.toLocaleString("en-IN")}</td>
                   <td className="px-4 py-3 text-center">
                     {isAdmin ? (

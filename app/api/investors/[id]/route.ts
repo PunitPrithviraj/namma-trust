@@ -3,15 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// 1. GET: Load the investor profile data
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
 
@@ -27,18 +24,13 @@ export async function GET(
       },
     });
 
-    if (!investor) {
-      return NextResponse.json({ error: "Investor not found" }, { status: 404 });
-    }
-
+    if (!investor) return NextResponse.json({ error: "Investor not found" }, { status: 404 });
     return NextResponse.json(investor);
   } catch (error) {
-    console.error("Fetch investor error:", error);
     return NextResponse.json({ error: "Failed to fetch investor" }, { status: 500 });
   }
 }
 
-// 2. DELETE: Safely delete the investor and all linked data
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -56,9 +48,7 @@ export async function DELETE(
       select: { userId: true }
     });
 
-    if (!investor) {
-      return NextResponse.json({ error: "Investor not found" }, { status: 404 });
-    }
+    if (!investor) return NextResponse.json({ error: "Investor not found" }, { status: 404 });
 
     await prisma.$transaction([
       prisma.profitDistribution.deleteMany({ where: { investorId: id } }),
@@ -76,7 +66,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete error:", error);
     return NextResponse.json({ error: "Failed to delete investor" }, { status: 500 });
   }
 }
