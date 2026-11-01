@@ -34,6 +34,7 @@ export type UserMinAggregateOutputType = {
   status: string | null
   forcePasswordReset: boolean | null
   lastPasswordChange: Date | null
+  mustChangePassword: boolean | null
   language: string | null
   createdAt: Date | null
 }
@@ -48,6 +49,7 @@ export type UserMaxAggregateOutputType = {
   status: string | null
   forcePasswordReset: boolean | null
   lastPasswordChange: Date | null
+  mustChangePassword: boolean | null
   language: string | null
   createdAt: Date | null
 }
@@ -62,6 +64,7 @@ export type UserCountAggregateOutputType = {
   status: number
   forcePasswordReset: number
   lastPasswordChange: number
+  mustChangePassword: number
   language: number
   createdAt: number
   _all: number
@@ -78,6 +81,7 @@ export type UserMinAggregateInputType = {
   status?: true
   forcePasswordReset?: true
   lastPasswordChange?: true
+  mustChangePassword?: true
   language?: true
   createdAt?: true
 }
@@ -92,6 +96,7 @@ export type UserMaxAggregateInputType = {
   status?: true
   forcePasswordReset?: true
   lastPasswordChange?: true
+  mustChangePassword?: true
   language?: true
   createdAt?: true
 }
@@ -106,6 +111,7 @@ export type UserCountAggregateInputType = {
   status?: true
   forcePasswordReset?: true
   lastPasswordChange?: true
+  mustChangePassword?: true
   language?: true
   createdAt?: true
   _all?: true
@@ -193,6 +199,7 @@ export type UserGroupByOutputType = {
   status: string
   forcePasswordReset: boolean
   lastPasswordChange: Date
+  mustChangePassword: boolean
   language: string
   createdAt: Date
   _count: UserCountAggregateOutputType | null
@@ -228,6 +235,7 @@ export type UserWhereInput = {
   status?: Prisma.StringFilter<"User"> | string
   forcePasswordReset?: Prisma.BoolFilter<"User"> | boolean
   lastPasswordChange?: Prisma.DateTimeFilter<"User"> | Date | string
+  mustChangePassword?: Prisma.BoolFilter<"User"> | boolean
   language?: Prisma.StringFilter<"User"> | string
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   investor?: Prisma.XOR<Prisma.InvestorNullableScalarRelationFilter, Prisma.InvestorWhereInput> | null
@@ -243,6 +251,7 @@ export type UserOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   forcePasswordReset?: Prisma.SortOrder
   lastPasswordChange?: Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   language?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   investor?: Prisma.InvestorOrderByWithRelationInput
@@ -261,6 +270,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.StringFilter<"User"> | string
   forcePasswordReset?: Prisma.BoolFilter<"User"> | boolean
   lastPasswordChange?: Prisma.DateTimeFilter<"User"> | Date | string
+  mustChangePassword?: Prisma.BoolFilter<"User"> | boolean
   language?: Prisma.StringFilter<"User"> | string
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   investor?: Prisma.XOR<Prisma.InvestorNullableScalarRelationFilter, Prisma.InvestorWhereInput> | null
@@ -276,6 +286,7 @@ export type UserOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   forcePasswordReset?: Prisma.SortOrder
   lastPasswordChange?: Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   language?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -296,6 +307,7 @@ export type UserScalarWhereWithAggregatesInput = {
   status?: Prisma.StringWithAggregatesFilter<"User"> | string
   forcePasswordReset?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   lastPasswordChange?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
+  mustChangePassword?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   language?: Prisma.StringWithAggregatesFilter<"User"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -310,6 +322,7 @@ export type UserCreateInput = {
   status?: string
   forcePasswordReset?: boolean
   lastPasswordChange?: Date | string
+  mustChangePassword?: boolean
   language?: string
   createdAt?: Date | string
   investor?: Prisma.InvestorCreateNestedOneWithoutUserInput
@@ -325,6 +338,7 @@ export type UserUncheckedCreateInput = {
   status?: string
   forcePasswordReset?: boolean
   lastPasswordChange?: Date | string
+  mustChangePassword?: boolean
   language?: string
   createdAt?: Date | string
   investor?: Prisma.InvestorUncheckedCreateNestedOneWithoutUserInput
@@ -340,6 +354,7 @@ export type UserUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   forcePasswordReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastPasswordChange?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   language?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   investor?: Prisma.InvestorUpdateOneWithoutUserNestedInput
@@ -355,6 +370,7 @@ export type UserUncheckedUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   forcePasswordReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastPasswordChange?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   language?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   investor?: Prisma.InvestorUncheckedUpdateOneWithoutUserNestedInput
@@ -370,6 +386,7 @@ export type UserCreateManyInput = {
   status?: string
   forcePasswordReset?: boolean
   lastPasswordChange?: Date | string
+  mustChangePassword?: boolean
   language?: string
   createdAt?: Date | string
 }
@@ -384,6 +401,7 @@ export type UserUpdateManyMutationInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   forcePasswordReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastPasswordChange?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   language?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -398,6 +416,7 @@ export type UserUncheckedUpdateManyInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   forcePasswordReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastPasswordChange?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   language?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -412,6 +431,7 @@ export type UserCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   forcePasswordReset?: Prisma.SortOrder
   lastPasswordChange?: Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   language?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -426,6 +446,7 @@ export type UserMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   forcePasswordReset?: Prisma.SortOrder
   lastPasswordChange?: Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   language?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -440,6 +461,7 @@ export type UserMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   forcePasswordReset?: Prisma.SortOrder
   lastPasswordChange?: Prisma.SortOrder
+  mustChangePassword?: Prisma.SortOrder
   language?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -491,6 +513,7 @@ export type UserCreateWithoutInvestorInput = {
   status?: string
   forcePasswordReset?: boolean
   lastPasswordChange?: Date | string
+  mustChangePassword?: boolean
   language?: string
   createdAt?: Date | string
 }
@@ -505,6 +528,7 @@ export type UserUncheckedCreateWithoutInvestorInput = {
   status?: string
   forcePasswordReset?: boolean
   lastPasswordChange?: Date | string
+  mustChangePassword?: boolean
   language?: string
   createdAt?: Date | string
 }
@@ -535,6 +559,7 @@ export type UserUpdateWithoutInvestorInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   forcePasswordReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastPasswordChange?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   language?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -549,6 +574,7 @@ export type UserUncheckedUpdateWithoutInvestorInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   forcePasswordReset?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastPasswordChange?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean
   language?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -565,6 +591,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   status?: boolean
   forcePasswordReset?: boolean
   lastPasswordChange?: boolean
+  mustChangePassword?: boolean
   language?: boolean
   createdAt?: boolean
   investor?: boolean | Prisma.User$investorArgs<ExtArgs>
@@ -580,6 +607,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   status?: boolean
   forcePasswordReset?: boolean
   lastPasswordChange?: boolean
+  mustChangePassword?: boolean
   language?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -594,6 +622,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   status?: boolean
   forcePasswordReset?: boolean
   lastPasswordChange?: boolean
+  mustChangePassword?: boolean
   language?: boolean
   createdAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -608,11 +637,12 @@ export type UserSelectScalar = {
   status?: boolean
   forcePasswordReset?: boolean
   lastPasswordChange?: boolean
+  mustChangePassword?: boolean
   language?: boolean
   createdAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "phone" | "passwordHash" | "role" | "status" | "forcePasswordReset" | "lastPasswordChange" | "language" | "createdAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "phone" | "passwordHash" | "role" | "status" | "forcePasswordReset" | "lastPasswordChange" | "mustChangePassword" | "language" | "createdAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   investor?: boolean | Prisma.User$investorArgs<ExtArgs>
 }
@@ -634,6 +664,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     status: string
     forcePasswordReset: boolean
     lastPasswordChange: Date
+    mustChangePassword: boolean
     language: string
     createdAt: Date
   }, ExtArgs["result"]["user"]>
@@ -1069,6 +1100,7 @@ export interface UserFieldRefs {
   readonly status: Prisma.FieldRef<"User", 'String'>
   readonly forcePasswordReset: Prisma.FieldRef<"User", 'Boolean'>
   readonly lastPasswordChange: Prisma.FieldRef<"User", 'DateTime'>
+  readonly mustChangePassword: Prisma.FieldRef<"User", 'Boolean'>
   readonly language: Prisma.FieldRef<"User", 'String'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
 }

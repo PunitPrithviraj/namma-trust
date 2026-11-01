@@ -17,6 +17,7 @@ model User {
   status           String   @default("active") 
   forcePasswordReset Boolean @default(false) 
   lastPasswordChange DateTime @default(now()) 
+ mustChangePassword Boolean @default(false)
   language         String   @default("en")
   createdAt        DateTime @default(now())
   
