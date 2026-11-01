@@ -3,6 +3,42 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+// 1. GET: Load the investor profile data
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  try {
+    const investor = await prisma.investor.findUnique({
+      where: { id },
+      include: {
+        user: { select: { email: true } },
+        investments: { orderBy: { date: "desc" } },
+        withdrawals: { orderBy: { date: "desc" } },
+        loans: { include: { schedule: true } },
+        profitDistributions: { include: { cycle: true } },
+      },
+    });
+
+    if (!investor) {
+      return NextResponse.json({ error: "Investor not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(investor);
+  } catch (error) {
+    console.error("Fetch investor error:", error);
+    return NextResponse.json({ error: "Failed to fetch investor" }, { status: 500 });
+  }
+}
+
+// 2. DELETE: Safely delete the investor and all linked data
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -15,7 +51,6 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    // 1. Find the investor to get their linked User ID (if any)
     const investor = await prisma.investor.findUnique({
       where: { id },
       select: { userId: true }
@@ -25,7 +60,6 @@ export async function DELETE(
       return NextResponse.json({ error: "Investor not found" }, { status: 404 });
     }
 
-    // 2. Use a transaction to safely delete all linked data
     await prisma.$transaction([
       prisma.profitDistribution.deleteMany({ where: { investorId: id } }),
       prisma.repayment.deleteMany({ where: { loan: { investorId: id } } }),
@@ -33,12 +67,9 @@ export async function DELETE(
       prisma.loan.deleteMany({ where: { investorId: id } }),
       prisma.withdrawal.deleteMany({ where: { investorId: id } }),
       prisma.investment.deleteMany({ where: { investorId: id } }),
-      
-      // Delete the Investor first to break the relation
       prisma.investor.delete({ where: { id } }),
     ]);
 
-    // 3. Delete the linked User account AFTER the investor is deleted
     if (investor.userId) {
       await prisma.user.delete({ where: { id: investor.userId } });
     }

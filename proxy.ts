@@ -6,12 +6,10 @@ export default withAuth(
     const token = req.nextauth.token as any;
     const { pathname } = req.nextUrl;
 
-    // Allow access to the password change page always
     if (pathname.startsWith("/account/password")) {
       return NextResponse.next();
     }
 
-    // Redirect to password page if the flag is true
     if (token?.mustChangePassword) {
       const url = req.nextUrl.clone();
       url.pathname = "/account/password";
@@ -28,6 +26,7 @@ export default withAuth(
 );
 
 export const config = {
+  // Do not include "/api/:path*" here, the API routes handle their own auth.
   matcher: [
     "/dashboard/:path*",
     "/investors/:path*",
