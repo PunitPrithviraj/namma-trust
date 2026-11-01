@@ -9,45 +9,73 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user as any).role !== "admin")
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || (session.user as any).role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const { id } = await params;
-  const body = await req.json();
-  const { email, password } = body;
+  const { email, password } = await req.json();
 
   if (!email || !password || password.length < 6) {
-    return NextResponse.json({ error: "Valid email and password (6+ chars) required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Valid email and password (min 6 chars) are required." },
+      { status: 400 }
+    );
   }
 
   try {
-    const investor = await prisma.investor.findUnique({ where: { id } });
-    if (!investor) return NextResponse.json({ error: "Investor not found" }, { status: 404 });
+    const investor = await prisma.investor.findUnique({
+      where: { id },
+      include: { user: true },
+    });
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    if (!investor) {
+      return NextResponse.json({ error: "Investor not found." }, { status: 404 });
+    }
 
-    // 1. Create the user account with role "investor"
-    const user = await prisma.user.create({
+    if (investor.user) {
+      return NextResponse.json(
+        { error: "This investor already has a login account." },
+        { status: 400 }
+      );
+    }
+
+    // Check if email is already in use by another user
+    const existingEmail = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingEmail) {
+      return NextResponse.json(
+        { error: "This email is already registered to another user." },
+        { status: 400 }
+      );
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    // Create the user and link it to the investor
+    await prisma.user.create({
       data: {
         name: investor.name,
         email: email,
-        phone: investor.phone, // <-- THIS LINKS THE PHONE NUMBER
-        passwordHash,
+        phone: investor.phone,
+        passwordHash: hashed,
         role: "investor",
+        status: "active",
+        // Connect to the investor using the relation
+        investor: {
+          connect: { id: investor.id },
+        },
       },
     });
 
-    // 2. Link the user to the investor
-    await prisma.investor.update({
-      where: { id },
-      data: { userId: user.id },
-    });
-
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    if (error.code === 'P2002') {
-      return NextResponse.json({ error: "Email or Phone number already in use" }, { status: 400 });
-    }
-    return NextResponse.json({ error: "Failed to create login" }, { status: 500 });
+  } catch (error) {
+    console.error("Create login error:", error);
+    return NextResponse.json(
+      { error: "Failed to create login. Please try again." },
+      { status: 500 }
+    );
   }
 }

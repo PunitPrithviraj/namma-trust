@@ -69,7 +69,7 @@ function InvestorContent() {
         amount: Number(amount),
         type: txType,
         notes,
-        date: txDate,
+        date: txDate, 
       }),
     });
 
@@ -119,8 +119,7 @@ function InvestorContent() {
   if (!data) return <div className="p-8 text-red-600">Investor not found.</div>;
 
   // --- Financial Calculations ---
-  // 1. Regular Investment (Only actual deposits)
-  const regularInvestment = data.investments?.reduce((sum: number, inv: any) => sum + inv.amount, 0) || 0;
+  const totalInvestment = data.investments?.reduce((sum: number, inv: any) => sum + inv.amount, 0) || 0;
   const totalWithdrawn = data.withdrawals?.reduce((sum: number, w: any) => sum + w.amount, 0) || 0;
 
   let totalLoan = 0;
@@ -146,11 +145,8 @@ function InvestorContent() {
     }
   });
 
-  // 3. Total Investment (Regular + Profit)
-  const totalInvestment = regularInvestment + totalProfit;
-  
-  // 4. Current Balance (Total Investment - Withdrawals)
-  const customBalance = totalInvestment - totalWithdrawn;
+  // ✅ Current Balance = Investment + Profit - Withdrawals
+  const customBalance = totalInvestment + totalProfit - totalWithdrawn;
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -177,10 +173,10 @@ function InvestorContent() {
         </div>
 
         <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '24px', fontSize: '10pt', border: '1px solid #999', padding: '8px 12px', backgroundColor: '#f9f9f9' }}>
-          <div><strong>Regular Inv:</strong> ₹{regularInvestment.toLocaleString("en-IN")}</div>
-          <div><strong>Total Inv (incl. Profit):</strong> ₹{totalInvestment.toLocaleString("en-IN")}</div>
+          <div><strong>Total Investment:</strong> ₹{totalInvestment.toLocaleString("en-IN")}</div>
           <div><strong>Outstanding Loan:</strong> ₹{pendingDues.toLocaleString("en-IN")}</div>
           <div><strong>Profit Earned:</strong> ₹{totalProfit.toLocaleString("en-IN")}</div>
+          <div><strong>This Month Profit:</strong> ₹{thisMonthProfit.toLocaleString("en-IN")}</div>
           <div><strong>Current Balance:</strong> ₹{customBalance.toLocaleString("en-IN")}</div>
         </div>
       </div>
@@ -292,18 +288,13 @@ function InvestorContent() {
       </div>
 
       {/* CLICKABLE SUMMARY CARDS (SCREEN ONLY) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 print:hidden">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 print:hidden">
         <Link href={`/investors/${id}/investments`} className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:scale-[1.02] transition-transform cursor-pointer block">
-          <p className="text-sm font-medium text-gray-500">Regular Investment</p>
-          <p className="text-2xl font-bold text-gray-800 mt-1">₹{regularInvestment.toLocaleString("en-IN")}</p>
+          <p className="text-sm font-medium text-gray-500">Total Investment</p>
+          <p className="text-2xl font-bold text-gray-800 mt-1">₹{totalInvestment.toLocaleString("en-IN")}</p>
           <p className="text-xs text-blue-500 mt-2 print:hidden">View History &rarr;</p>
         </Link>
         
-        <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-          <p className="text-sm font-medium text-gray-500">Total Investment (incl. Profit)</p>
-          <p className="text-2xl font-bold text-green-600 mt-1">₹{totalInvestment.toLocaleString("en-IN")}</p>
-        </div>
-
         <Link href={`/investors/${id}/loans`} className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:scale-[1.02] transition-transform cursor-pointer block">
           <p className="text-sm font-medium text-gray-500">Total Loan (Active)</p>
           <p className="text-2xl font-bold text-blue-600 mt-1">₹{totalLoan.toLocaleString("en-IN")}</p>

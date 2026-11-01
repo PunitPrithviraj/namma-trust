@@ -1,7 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { prisma } from "./prisma";
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -10,58 +10,58 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        identifier: { label: "Email or Phone", type: "text" },
+        identifier: { label: "Email, Phone, or ID", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.identifier || !credentials?.password) return null;
 
-        const identifier = credentials.identifier.trim();
-
+        // Find user by Email, Phone Number, OR by Investor Code
         const user = await prisma.user.findFirst({
           where: {
             OR: [
-              { email: identifier },
-              { phone: identifier },
-            ],
-          },
+              { email: credentials.identifier },               // Admin email
+              { phone: credentials.identifier },               // Investor phone
+              { investor: { code: credentials.identifier } }   // Investor code (e.g. INV-001)
+            ]
+          }
         });
 
         if (!user) return null;
-        if (user.status === "locked") throw new Error("Your account has been locked. Please contact the administrator.");
 
-        const valid = await bcrypt.compare(credentials.password, user.passwordHash);
-        if (!valid) return null;
+        // Verify password against the hashed password in DB
+        const ok = await bcrypt.compare(credentials.password, user.passwordHash);
+        if (!ok) return null;
 
         return {
           id: user.id,
-          email: user.email,
           name: user.name,
           role: user.role,
-          forcePasswordReset: user.forcePasswordReset,
-        };
+          mustChangePassword: (user as any).mustChangePassword ?? false,
+        } as any;
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user) {
+        token.id = (user as any).id;
         token.role = (user as any).role;
-        token.id = user.id;
-        token.forcePasswordReset = (user as any).forcePasswordReset;
+        token.mustChangePassword = (user as any).mustChangePassword ?? false;
       }
-      if (trigger === "update" && session?.forcePasswordReset !== undefined) {
-        token.forcePasswordReset = session.forcePasswordReset;
+      if (trigger === "update" && session?.mustChangePassword !== undefined) {
+        token.mustChangePassword = session.mustChangePassword;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).role = token.role;
         (session.user as any).id = token.id;
-        (session.user as any).forcePasswordReset = token.forcePasswordReset;
+        (session.user as any).role = token.role;
+        (session.user as any).mustChangePassword = token.mustChangePassword ?? false;
       }
       return session;
     },
   },
+  secret: process.env.NEXTAUTH_SECRET,
 };
