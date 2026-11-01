@@ -15,33 +15,33 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    // Use a transaction to safely delete all linked data first
+    // 1. Find the investor to get their linked User ID (if any)
+    const investor = await prisma.investor.findUnique({
+      where: { id },
+      select: { userId: true }
+    });
+
+    if (!investor) {
+      return NextResponse.json({ error: "Investor not found" }, { status: 404 });
+    }
+
+    // 2. Use a transaction to safely delete all linked data
     await prisma.$transaction([
-      // 1. Delete all Profit Distributions
       prisma.profitDistribution.deleteMany({ where: { investorId: id } }),
-      
-      // 2. Delete all Repayments (via Loan relation)
       prisma.repayment.deleteMany({ where: { loan: { investorId: id } } }),
-      
-      // 3. Delete all Loan Schedules
       prisma.loanSchedule.deleteMany({ where: { loan: { investorId: id } } }),
-      
-      // 4. Delete all Loans
       prisma.loan.deleteMany({ where: { investorId: id } }),
-      
-      // 5. Delete all Withdrawals
       prisma.withdrawal.deleteMany({ where: { investorId: id } }),
-      
-      // 6. Delete all Investments
       prisma.investment.deleteMany({ where: { investorId: id } }),
       
-      // 7. Delete the linked Login (User) account
-      // FIX IS HERE: Changed investorId to investor: { id: id }
-      prisma.user.deleteMany({ where: { investor: { id: id } } }),
-      
-      // 8. Finally, delete the Investor
-      prisma.investor.delete({ where: { id } })
+      // Delete the Investor first to break the relation
+      prisma.investor.delete({ where: { id } }),
     ]);
+
+    // 3. Delete the linked User account AFTER the investor is deleted
+    if (investor.userId) {
+      await prisma.user.delete({ where: { id: investor.userId } });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

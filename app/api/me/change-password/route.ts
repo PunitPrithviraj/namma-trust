@@ -11,42 +11,24 @@ export async function POST(req: Request) {
   }
 
   const userId = (session.user as any).id as string;
-  const body = await req.json();
-  const { currentPassword, newPassword } = body;
+  const { currentPassword, newPassword } = await req.json();
 
   if (!currentPassword || !newPassword) {
     return NextResponse.json({ error: "All fields required." }, { status: 400 });
   }
   if (newPassword.length < 6) {
-    return NextResponse.json(
-      { error: "Password must be at least 6 characters." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 400 });
   }
-  if (!/[A-Za-z]/.test(newPassword)) {
-    return NextResponse.json(
-      { error: "Password must contain a letter." },
-      { status: 400 }
-    );
-  }
-  if (!/[0-9]/.test(newPassword)) {
-    return NextResponse.json(
-      { error: "Password must contain a number." },
-      { status: 400 }
-    );
+  if (!/[A-Za-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+    return NextResponse.json({ error: "Password must contain a letter and a number." }, { status: 400 });
   }
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    return NextResponse.json({ error: "User not found." }, { status: 404 });
-  }
+  if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 });
 
   const ok = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!ok) {
-    return NextResponse.json(
-      { error: "Current password is incorrect." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Current password is incorrect." }, { status: 400 });
   }
 
   const hashed = await bcrypt.hash(newPassword, 10);
@@ -62,5 +44,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ success: true });
 }
-
-
