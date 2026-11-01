@@ -3,72 +3,49 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const resolvedParams = await params;
-  const id = resolvedParams.id;
-
-  try {
-    const investor = await prisma.investor.findUnique({
-      where: { id },
-      include: {
-
-        user : true,
-        investments: { orderBy: { date: "desc" } },
-        withdrawals: { orderBy: { date: "desc" } },
-        loans: { 
-          orderBy: { startDate: "desc" },
-          include: {
-            schedule: true,
-            repayments: true
-          }
-        },
-      },
-    });
-
-    if (!investor) {
-      return NextResponse.json({ error: "Investor not found in database" }, { status: 404 });
-    }
-
-    // Fetch the profit distributions
-    const profitDistributions = await prisma.profitDistribution.findMany({
-      where: { investorId: id },
-      include: { cycle: true },
-      orderBy: { cycle: { cycleStart: "desc" } },
-    });
-
-    const totalInvested = investor.investments.reduce((s, i) => s + i.amount, 0);
-    const totalWithdrawn = investor.withdrawals.reduce((s, w) => s + w.amount, 0);
-
-    return NextResponse.json({
-      ...investor,
-      profitDistributions,
-      balance: totalInvested - totalWithdrawn,
-    });
-  } catch (error) {
-    console.error("Database error:", error);
-    return NextResponse.json({ error: "Failed to load investor" }, { status: 500 });
-  }
-}
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
-  // SECURITY CHECK
-  if (!session || (session.user as any).role !== "admin")
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || (session.user as any).role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const { id } = await params;
+
   try {
-    await prisma.investor.delete({ where: { id } });
+    // Use a transaction to safely delete all linked data first
+    await prisma.$transaction([
+      // 1. Delete all Profit Distributions
+      prisma.profitDistribution.deleteMany({ where: { investorId: id } }),
+      
+      // 2. Delete all Repayments (via Loan relation)
+      prisma.repayment.deleteMany({ where: { loan: { investorId: id } } }),
+      
+      // 3. Delete all Loan Schedules
+      prisma.loanSchedule.deleteMany({ where: { loan: { investorId: id } } }),
+      
+      // 4. Delete all Loans
+      prisma.loan.deleteMany({ where: { investorId: id } }),
+      
+      // 5. Delete all Withdrawals
+      prisma.withdrawal.deleteMany({ where: { investorId: id } }),
+      
+      // 6. Delete all Investments
+      prisma.investment.deleteMany({ where: { investorId: id } }),
+      
+      // 7. Delete the linked Login (User) account
+      // FIX IS HERE: Changed investorId to investor: { id: id }
+      prisma.user.deleteMany({ where: { investor: { id: id } } }),
+      
+      // 8. Finally, delete the Investor
+      prisma.investor.delete({ where: { id } })
+    ]);
+
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: "Cannot delete investor." }, { status: 400 });
+    console.error("Delete error:", error);
+    return NextResponse.json({ error: "Failed to delete investor" }, { status: 500 });
   }
 }
