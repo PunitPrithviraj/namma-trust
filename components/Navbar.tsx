@@ -24,11 +24,10 @@ function NavbarContent() {
     { name: "Create Loan", href: "/loans/new" },
     { name: "Profit Distribution", href: "/cycles" },
     { name: "Audit Log", href: "/audit" },
-    { name: "Users", href: "/users" },
   ];
 
   const investorLinks = [
-    { name: "My Portfolio", href: "/investor-portal" },
+    { name: "My Data", href: "/investor-portal" },
   ];
 
   const navLinks = isAdmin ? adminLinks : investorLinks;
