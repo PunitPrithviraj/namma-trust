@@ -1,97 +1,120 @@
 "use client";
 
+import { signIn } from "next-auth/react";
 import { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  async function submit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setLoading(true);
     setError("");
-    setBusy(true);
 
     const res = await signIn("credentials", {
-      email,
+      identifier,
       password,
       redirect: false,
     });
 
-    if (!res || res.error) {
-      setBusy(false);
-      setError("Invalid email or password.");
-      return;
-    }
+    setLoading(false);
 
-    const session = await getSession();
-    const mustChange = (session?.user as any)?.mustChangePassword === true;
-    setBusy(false);
-
-    if (mustChange) {
-      router.push("/account/password");
+    if (res?.error) {
+      setError(res.error === "CredentialsSignin" ? "Invalid email/phone or password" : res.error);
+    } else {
+      const sessionRes = await fetch("/api/auth/session");
+      const session = await sessionRes.json();
+      
+      if (session?.user?.role === "investor") {
+        router.push("/investor-portal");
+      } else {
+        router.push("/dashboard");
+      }
       router.refresh();
-      return;
     }
-
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-sm border p-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-1">Namma Trust</h1>
-        <p className="text-sm text-gray-500 mb-6">Sign in to continue</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-8 rounded-lg shadow-md w-full max-w-md"
+      >
+        <h1 className="text-2xl font-bold mb-1 text-center text-gray-800">Namma Trust</h1>
+        <p className="text-sm text-gray-500 text-center mb-6">ನಮ್ಮ ಟ್ರಸ್ಟ್</p>
 
         {error && (
-          <div className="bg-red-50 text-red-700 text-sm p-3 rounded mb-4">
+          <div className="bg-red-50 text-red-700 p-3 rounded mb-4 text-sm">
             {error}
           </div>
         )}
 
-        <form onSubmit={submit} className="space-y-4">
-          <label className="block">
-            <span className="text-sm font-medium text-gray-700">Email</span>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full border rounded px-3 py-2"
-              autoComplete="email"
-            />
-          </label>
+        <label className="block mb-4">
+          <span className="text-sm font-medium text-gray-700">Email Address or Phone Number</span>
+          <input
+            type="text"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            required
+            placeholder="Enter email or phone"
+            className="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </label>
 
-          <label className="block">
-            <span className="text-sm font-medium text-gray-700">Password</span>
+        <label className="block mb-2">
+          <span className="text-sm font-medium text-gray-700">Password</span>
+          <div className="relative mt-1">
             <input
-              type="password"
-              required
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full border rounded px-3 py-2"
-              autoComplete="current-password"
+              required
+              className="w-full border rounded px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </label>
+            {/* SHOW/HIDE PASSWORD BUTTON */}
+            <button
+              type="button" // <-- CRUCIAL: Prevents form submission
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                // Eye-Off Icon (Hidden)
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
+              ) : (
+                // Eye Icon (Visible)
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </label>
 
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {busy ? "Signing in…" : "Sign In"}
-          </button>
-        </form>
+        <div className="text-right mb-6">
+          <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+            Forgot Password?
+          </Link>
+        </div>
 
-        <p className="text-xs text-gray-500 mt-6 text-center">
-          Forgot password? Contact your trust admin.
-        </p>
-      </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50 font-medium transition-colors"
+        >
+          {loading ? "Signing in..." : "Sign In"}
+        </button>
+      </form>
     </div>
   );
 }
