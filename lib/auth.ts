@@ -15,15 +15,12 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
         if (!user) return null;
-
-        const ok = await bcrypt.compare(credentials.password, user.password);
+        const ok = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!ok) return null;
-
         return {
           id: user.id,
           email: user.email,
@@ -40,7 +37,6 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as any).role;
         token.mustChangePassword = (user as any).mustChangePassword ?? false;
       }
-      // Allow client to clear the flag after changing password
       if (trigger === "update" && session?.mustChangePassword !== undefined) {
         token.mustChangePassword = session.mustChangePassword;
       }
