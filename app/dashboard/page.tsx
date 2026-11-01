@@ -83,7 +83,6 @@ async function DashboardContent() {
         >
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
           <p className="text-3xl font-bold text-gray-800 mt-2">₹{totalInvestment.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-blue-500 mt-2 font-medium">View Breakdown &rarr;</p>
         </Link>
 
         {/* 2. Total Team Regular Investment */}
