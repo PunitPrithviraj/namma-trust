@@ -46,7 +46,7 @@ function InvestorsListContent() {
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => fetchInvestors(search), 300);
-    return () => clearTimeout(debounceFn);
+    return () => clearTimeout(delayDebounceFn); // 👈 FIXED TYPO HERE
   }, [search]);
 
   // Close New Transaction dropdown when clicking outside
@@ -172,10 +172,10 @@ function InvestorsListContent() {
                             <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-40 overflow-y-auto">
                               {dropdownInvestors.map((inv) => (
                                 <button 
-                                  type="button" // 👈 ADDED to prevent form submission
+                                  type="button"
                                   key={inv.id} 
                                   onMouseDown={(e) => {
-                                    e.preventDefault(); // 👈 ADDED to prevent input blur before click
+                                    e.preventDefault();
                                     setSelectedInvestor(inv);
                                     setTxSearch("");
                                   }}
@@ -332,3 +332,4 @@ export default function InvestorsPage() {
     </Suspense>
   );
 }
+
