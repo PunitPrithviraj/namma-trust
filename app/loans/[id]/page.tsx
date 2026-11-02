@@ -15,7 +15,9 @@ function LoanContent() {
   const [loading, setLoading] = useState(true);
   const [payingId, setPayingId] = useState<string | null>(null);
 
+  // EXTRA REPAYMENT STATE
   const [extraAmount, setExtraAmount] = useState("");
+  const [extraDate, setExtraDate] = useState(new Date().toISOString().split("T")[0]); // 👈 New date state
   const [extraLoading, setExtraLoading] = useState(false);
 
   const [currentPrincipal, setCurrentPrincipal] = useState(0);
@@ -26,7 +28,6 @@ function LoanContent() {
       const data = await res.json();
       setLoan(data);
       
-      // Calculate the live principal (Original - all repayments)
       let livePrincipal = data.principalAmount;
       if (data.repayments && data.repayments.length > 0) {
         const totalPrincipalPaid = data.repayments.reduce((sum: number, r: any) => sum + r.principalPart, 0);
@@ -73,7 +74,10 @@ function LoanContent() {
     const res = await fetch(`/api/loans/${id}/repay`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: Number(extraAmount) }),
+      body: JSON.stringify({ 
+        amount: Number(extraAmount),
+        date: extraDate // 👈 Send the selected date to API
+      }),
     });
     if (res.ok) {
       setExtraAmount("");
@@ -119,7 +123,6 @@ function LoanContent() {
         </div>
         <div className="flex gap-2">
           
-          {/* WHATSAPP REMINDER BUTTON */}
           <a 
             href={`https://wa.me/91${investor.phone.replace(/\D/g, '').slice(-10)}?text=${encodeURIComponent(
               `Hello ${investor.name}, this is a reminder from Namma Trust. Your loan (${loan.code || 'N/A'}) has a current outstanding principal of ₹${currentPrincipal.toLocaleString("en-IN")}. Please ensure your monthly installment is paid on time. Thank you!`
@@ -152,9 +155,22 @@ function LoanContent() {
                 required
                 min="1"
                 className="mt-1 w-full border rounded px-3 py-2"
-                placeholder="Enter amount to reduce principal immediately"
+                placeholder="Amount"
               />
             </label>
+
+            {/* 👈 ADDED DATE PICKER HERE */}
+            <label className="block w-40">
+              <span className="text-sm font-medium">Date</span>
+              <input
+                type="date"
+                value={extraDate}
+                onChange={(e) => setExtraDate(e.target.value)}
+                required
+                className="mt-1 w-full border rounded px-3 py-2"
+              />
+            </label>
+
             <button
               type="submit"
               disabled={extraLoading}
@@ -182,7 +198,6 @@ function LoanContent() {
           </thead>
           <tbody>
             {loan.schedule.map((sch: any) => {
-              // 👈 EMI is now strictly Term + Interest
               const emiAmount = sch.termAmount + sch.interestAmount;
               const repayment = loan.repayments?.find((r: any) => r.scheduleId === sch.id);
               
@@ -197,10 +212,7 @@ function LoanContent() {
                   <td className="px-4 py-3 text-right">₹{sch.openingPrincipal.toLocaleString("en-IN")}</td>
                   <td className="px-4 py-3 text-right text-red-600">₹{sch.interestAmount.toLocaleString("en-IN", {maximumFractionDigits:0})}</td>
                   <td className="px-4 py-3 text-right">₹{sch.termAmount.toLocaleString("en-IN")}</td>
-                  
-                  {/* 👈 Display EMI amount */}
                   <td className="px-4 py-3 text-right font-bold">₹{emiAmount.toLocaleString("en-IN", {maximumFractionDigits:0})}</td>
-                  
                   <td className="px-4 py-3 text-right">₹{sch.closingPrincipal.toLocaleString("en-IN")}</td>
                   <td className="px-4 py-3 text-center">
                     {isAdmin ? (
@@ -275,7 +287,6 @@ function LoanContent() {
                     <div className="flex gap-4 text-xs text-gray-500 mt-2 bg-gray-50 p-2 rounded">
                       <span>Principal: ₹{rep.principalPart.toLocaleString("en-IN")}</span>
                       <span>Interest: ₹{rep.interestPart.toLocaleString("en-IN")}</span>
-                      {/* Removed the 1000 Inv display from timeline */}
                     </div>
                   </div>
                 );
