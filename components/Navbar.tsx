@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useState } from "react";
+import Image from "next/image"; // 👈 Added Image import
 import { 
   LayoutDashboard, 
   Users2, 
@@ -12,7 +13,6 @@ import {
   ScrollText, 
   KeyRound, 
   ShieldCheck, 
-  Home, 
   LogOut, 
   Menu 
 } from "lucide-react";
@@ -24,24 +24,21 @@ export default function Navbar() {
 
   const isAdmin = (session?.user as any)?.role === "admin";
 
-  // Don't show navbar on login page
   if (pathname === "/login") return null;
 
-  // Helper to check if a link is active
   const isActive = (path: string) => {
     if (path === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(path);
   };
 
-  // Helper for active classes
   const getLinkClass = (path: string, isMobile = false) => {
     const base = isMobile 
       ? "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors" 
       : "flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors";
 
     return isActive(path)
-      ? `${base} bg-blue-50 text-blue-700` // Active state (Highlight)
-      : `${base} text-gray-600 hover:text-blue-600 hover:bg-gray-50`; // Inactive state
+      ? `${base} bg-blue-50 text-blue-700` 
+      : `${base} text-gray-600 hover:text-blue-600 hover:bg-gray-50`; 
   };
 
   return (
@@ -49,10 +46,19 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between h-16 items-center">
           
-          {/* Logo / Brand */}
-          <Link href="/dashboard" className="flex items-center gap-2 font-bold text-xl text-blue-800">
-            <Home className="w-6 h-6" />
-            Namma Trust
+          {/* 👈 LOGO ADDED HERE */}
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <Image 
+              src="/logo.png" 
+              alt="Namma Trust" 
+              width={40} 
+              height={40} 
+              className="object-contain"
+              priority
+            />
+            <span className="font-bold text-xl text-blue-900 hidden sm:block">
+              Namma Trust
+            </span>
           </Link>
 
           {/* Desktop Menu */}
@@ -76,12 +82,12 @@ export default function Navbar() {
             <div className="h-6 w-px bg-gray-300 mx-2"></div>
 
             <Link href="/account/password" className={getLinkClass("/account/password")}>
-              <KeyRound className="w-4 h-4" /> Change Password
+              <KeyRound className="w-4 h-4" /> Password
             </Link>
 
             {isAdmin && (
               <Link href="/admin/passwords" className={getLinkClass("/admin/passwords")}>
-                <ShieldCheck className="w-4 h-4" /> Manage Passwords
+                <ShieldCheck className="w-4 h-4" /> Manage
               </Link>
             )}
 
@@ -145,3 +151,4 @@ export default function Navbar() {
     </nav>
   );
 }
+
