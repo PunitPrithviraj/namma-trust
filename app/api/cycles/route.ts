@@ -10,9 +10,20 @@ const cycleSchema = z.object({
   year: z.number().min(2020),
 });
 
+// GET: Fetch all cycles
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const cycles = await prisma.monthlyCycle.findMany({
+    orderBy: { createdAt: "desc" }, // Show newest first
+  });
+  return NextResponse.json(cycles);
+}
+
+// POST: Create a new cycle
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  // SECURITY CHECK
   if (!session || (session.user as any).role !== "admin")
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -25,11 +36,15 @@ export async function POST(req: Request) {
   const cycleStart = new Date(year, month, 9);
   const cycleEnd = new Date(year, month + 1, 8);
 
-  const existing = await prisma.monthlyCycle.findFirst({ where: { cycleStart, cycleEnd } });
-  if (existing) return NextResponse.json({ error: "A cycle for this month already exists." }, { status: 400 });
+  // 👈 REMOVED THE "EXISTING CYCLE" CHECK TO ALLOW MULTIPLE ENTRIES
 
   const cycle = await prisma.monthlyCycle.create({
-    data: { cycleStart, cycleEnd, totalInterestCollected, status: "collection" }
+    data: { 
+      cycleStart, 
+      cycleEnd, 
+      totalInterestCollected, 
+      status: "open" // Set to open so you can distribute it later
+    }
   });
 
   return NextResponse.json(cycle);

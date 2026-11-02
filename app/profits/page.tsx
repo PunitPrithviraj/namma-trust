@@ -7,7 +7,6 @@ export default function ProfitsPage() {
   const [cycles, setCycles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // DROPDOWN STATE
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -36,7 +35,6 @@ export default function ProfitsPage() {
     loadCycles();
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -68,7 +66,7 @@ export default function ProfitsPage() {
     if (res.ok) {
       setIsDropdownOpen(false);
       setTotalInterest("");
-      loadCycles(); // Refresh the table
+      loadCycles();
     } else {
       setError(typeof data.error === "string" ? data.error : "Failed to create cycle.");
     }
@@ -82,7 +80,6 @@ export default function ProfitsPage() {
           <p className="text-gray-500 mt-1">Manage monthly cycles and distribute profits to investors.</p>
         </div>
         
-        {/* DROPDOWN BUTTON & MENU */}
         <div className="relative" ref={dropdownRef}>
           <button 
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -94,7 +91,7 @@ export default function ProfitsPage() {
           {isDropdownOpen && (
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 p-5 z-50">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold text-gray-800">Create Cycle</h2>
+                <h2 className="text-lg font-bold text-gray-800">Add Profit Entry</h2>
                 <button onClick={() => setIsDropdownOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
               </div>
               
@@ -147,7 +144,7 @@ export default function ProfitsPage() {
                   disabled={submitLoading}
                   className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 disabled:opacity-50 font-medium text-sm mt-2"
                 >
-                  {submitLoading ? "Creating..." : "Create Cycle"}
+                  {submitLoading ? "Saving..." : "Save Entry"}
                 </button>
               </form>
             </div>
@@ -160,6 +157,7 @@ export default function ProfitsPage() {
           <thead className="bg-gray-50 text-gray-600 text-sm border-b">
             <tr>
               <th className="px-6 py-4">Cycle Month</th>
+              <th className="px-6 py-4">Entry Date</th> {/* 👈 Added to differentiate entries */}
               <th className="px-6 py-4 text-right">Interest Collected</th>
               <th className="px-6 py-4 text-right">Total Distributed</th>
               <th className="px-6 py-4">Status</th>
@@ -172,11 +170,14 @@ export default function ProfitsPage() {
                 <td className="px-6 py-4 font-medium text-gray-800">
                   {new Date(cycle.cycleStart).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
                 </td>
+                <td className="px-6 py-4 text-gray-500 text-sm">
+                  {new Date(cycle.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                </td>
                 <td className="px-6 py-4 text-right text-gray-600">
                   ₹{cycle.totalInterestCollected.toLocaleString("en-IN")}
                 </td>
                 <td className="px-6 py-4 text-right text-green-600 font-medium">
-                  ₹{cycle.totalDistributed.toLocaleString("en-IN")}
+                  ₹{cycle.totalDistributed?.toLocaleString("en-IN") || 0}
                 </td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 rounded text-xs font-bold ${
@@ -194,7 +195,7 @@ export default function ProfitsPage() {
             ))}
             {cycles.length === 0 && !loading && (
               <tr>
-                <td colSpan={5} className="p-6 text-center text-gray-500">
+                <td colSpan={6} className="p-6 text-center text-gray-500">
                   No profit cycles found. Click "Create New Cycle" to start.
                 </td>
               </tr>
@@ -205,4 +206,3 @@ export default function ProfitsPage() {
     </div>
   );
 }
-
