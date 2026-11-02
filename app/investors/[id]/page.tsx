@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -17,10 +17,15 @@ function InvestorContent() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
+  // TRANSACTION STATE
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  const [txType, setTxType] = useState<"investment" | "withdrawal" | "profit">("investment");
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
-  const [txType, setTxType] = useState<"investment" | "withdrawal">("investment");
   const [txDate, setTxDate] = useState(new Date().toISOString().split("T")[0]);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState("");
 
   async function load() {
@@ -42,25 +47,22 @@ function InvestorContent() {
 
   useEffect(() => { load(); }, [id]);
 
-  async function handleEditJoinDate() {
-    const currentDate = new Date(data.joinDate).toISOString().split('T')[0];
-    const newDate = prompt("Enter new joining date (YYYY-MM-DD):", currentDate);
-    if (!newDate) return;
-
-    const res = await fetch(`/api/investors/${id}/update`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ joinDate: newDate }),
-    });
-
-    if (res.ok) load();
-    else alert("Failed to update joining date.");
-  }
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   async function handleTransaction(e: React.FormEvent) {
     e.preventDefault();
+    setSubmitLoading(true);
     setError("");
-    
+
     const res = await fetch("/api/transactions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -73,13 +75,17 @@ function InvestorContent() {
       }),
     });
 
+    const resData = await res.json();
+    setSubmitLoading(false);
+
     if (res.ok) {
+      setIsDropdownOpen(false);
       setAmount("");
       setNotes("");
+      setTxType("investment");
       load(); 
     } else {
-      const err = await res.json();
-      setError(typeof err.error === "string" ? err.error : "Transaction failed");
+      setError(typeof resData.error === "string" ? resData.error : "Transaction failed");
     }
   }
 
@@ -94,29 +100,10 @@ function InvestorContent() {
   }
 
   async function handleDeleteTransaction(tx: any) {
-    const isMonthly = tx.type === "monthly" || tx.notes === "Monthly ₹1,000 Admin Entry";
-    const msg = isMonthly 
-      ? "Are you sure you want to delete this ₹1,000 monthly investment transaction? This amount will be removed from the investor's regular investment and Trust fund calculations."
-      : "Delete this transaction? The balance will be recalculated.";
-      
-    if (!confirm(msg)) return;
+    if (!confirm("Delete this transaction? The balance will be recalculated.")) return;
     const res = await fetch(`/api/transactions/${tx.id}`, { method: "DELETE" });
     if (res.ok) load();
     else alert("Failed to delete transaction");
-  }
-
-  async function handleEditTransaction(tx: any) {
-    const newAmount = prompt(`Edit Amount (Current: ₹${tx.amount}):`, tx.amount.toString());
-    if (!newAmount || isNaN(Number(newAmount))) return;
-
-    const res = await fetch(`/api/transactions/${tx.id}/update`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: Number(newAmount), notes: tx.notes }),
-    });
-
-    if (res.ok) load();
-    else alert("Failed to update transaction");
   }
 
   if (loading) return <div className="p-8">Loading...</div>;
@@ -165,29 +152,78 @@ function InvestorContent() {
             <h1 className="text-3xl font-bold flex items-center gap-3">
               {data.name}
               <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
-                <span className="text-sm font-mono text-gray-600">
-                  {data.code || "NO-ID"}
-                </span>
+                <span className="text-sm font-mono text-gray-600">{data.code || "NO-ID"}</span>
               </div>
             </h1>
-            <div className="flex items-center gap-2 mt-1">
-              <p className="text-gray-500">{data.phone} • Joined {new Date(data.joinDate).toLocaleDateString("en-IN")}</p>
-            </div>
+            <p className="text-gray-500 mt-1">{data.phone} • Joined {new Date(data.joinDate).toLocaleDateString("en-IN")}</p>
           </div>
-          <div className="flex gap-2">
+          
+          <div className="flex gap-3 relative" ref={dropdownRef}>
             <button onClick={() => window.print()} className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900">
               🖨️ Print
             </button>
             {isAdmin && (
               <button onClick={handleDeleteInvestor} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-                Delete Investor
+                Delete
               </button>
+            )}
+            
+            {/* 👈 NEW TRANSACTION DROPDOWN */}
+            {isAdmin && (
+              <div>
+                <button 
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium"
+                >
+                  + New Transaction
+                </button>
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 p-5 z-50">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-lg font-bold text-gray-800">Add Entry</h2>
+                      <button onClick={() => setIsDropdownOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+                    </div>
+                    
+                    {error && <div className="bg-red-50 text-red-700 p-2 rounded mb-3 text-xs">{error}</div>}
+
+                    <form onSubmit={handleTransaction} className="space-y-4">
+                      <label className="block">
+                        <span className="text-xs font-medium text-gray-700">Type</span>
+                        <select value={txType} onChange={(e) => setTxType(e.target.value as any)} className="mt-1 w-full border rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500">
+                          <option value="investment">Add Investment</option>
+                          <option value="withdrawal">Withdraw Funds</option>
+                          <option value="profit">Direct Profit Entry</option>
+                        </select>
+                      </label>
+                      
+                      <label className="block">
+                        <span className="text-xs font-medium text-gray-700">Amount (₹)</span>
+                        <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required min="1" className="mt-1 w-full border rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500" />
+                      </label>
+
+                      <label className="block">
+                        <span className="text-xs font-medium text-gray-700">Date</span>
+                        <input type="date" value={txDate} onChange={(e) => setTxDate(e.target.value)} required className="mt-1 w-full border rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500" />
+                      </label>
+
+                      <label className="block">
+                        <span className="text-xs font-medium text-gray-700">Notes (Optional)</span>
+                        <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} className="mt-1 w-full border rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500" />
+                      </label>
+                      
+                      <button type="submit" disabled={submitLoading} className={`w-full py-2 rounded text-white font-medium text-sm mt-2 disabled:opacity-50 ${txType === "investment" ? "bg-green-600 hover:bg-green-700" : txType === "withdrawal" ? "bg-red-600 hover:bg-red-700" : "bg-purple-600 hover:bg-purple-700"}`}>
+                        {submitLoading ? "Saving..." : "Save Transaction"}
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* CLICKABLE SUMMARY CARDS (SCREEN ONLY) */}
+      {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 print:hidden">
         <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
@@ -218,91 +254,52 @@ function InvestorContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 space-y-6">
-          
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b bg-gray-50 font-semibold text-gray-700">Recent Transactions</div>
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="text-left px-4 py-2 text-sm text-gray-500">Date</th>
-                  <th className="text-left px-4 py-2 text-sm text-gray-500">Type</th>
-                  <th className="text-right px-4 py-2 text-sm text-gray-500">Amount</th>
-                  {isAdmin && <th className="text-right px-4 py-2 text-sm text-gray-500 print:hidden">Action</th>}
+      {/* TRANSACTIONS TABLE */}
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-4 border-b bg-gray-50 font-semibold text-gray-700">Recent Transactions</div>
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-4 py-2 text-sm text-gray-500">Date</th>
+                <th className="text-left px-4 py-2 text-sm text-gray-500">Type</th>
+                <th className="text-right px-4 py-2 text-sm text-gray-500">Amount</th>
+                {isAdmin && <th className="text-right px-4 py-2 text-sm text-gray-500 print:hidden">Action</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {[...data.investments.map((i:any)=>({...i, color:"text-green-600"})), 
+                ...data.withdrawals.map((w:any)=>({...w, type:"Withdrawal", color:"text-red-600"}))]
+                .sort((a,b)=> new Date(b.date).getTime() - new Date(a.date).getTime())
+                .map((tx: any) => {
+                const isProfit = tx.type === "profit";
+                const isMonthly = tx.type === "monthly" || tx.notes === "Monthly ₹1,000 Admin Entry";
+                
+                let displayType = tx.type === "Withdrawal" ? "Withdrawal" : tx.type === "investment" ? "Investment" : "Profit";
+                if (isMonthly) displayType = "Monthly Investment";
+                
+                return (
+                <tr key={tx.id} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-2 text-sm">{new Date(tx.date).toLocaleDateString()}</td>
+                  <td className={`px-4 py-2 text-sm font-medium ${isProfit ? "text-purple-600" : isMonthly ? "text-blue-600" : tx.color}`}>
+                    {displayType}
+                  </td>
+                  <td className={`px-4 py-2 text-right font-medium ${isProfit ? "text-purple-600" : tx.color}`}>
+                    {tx.type === "Withdrawal" ? "-" : "+"}₹{tx.amount.toLocaleString("en-IN")}
+                  </td>
+                  {isAdmin && (
+                    <td className="px-4 py-2 text-right print:hidden">
+                      <button onClick={() => handleDeleteTransaction(tx)} className="text-red-500 hover:text-red-700 text-xs font-bold">Delete</button>
+                    </td>
+                  )}
                 </tr>
-              </thead>
-              <tbody>
-                {[...data.investments.map((i:any)=>({...i, type:"Investment", color:"text-green-600"})), 
-                  ...data.withdrawals.map((w:any)=>({...w, type:"Withdrawal", color:"text-red-600"}))]
-                  .sort((a,b)=> new Date(b.date).getTime() - new Date(a.date).getTime())
-                  .slice(0, 5)
-                  .map((tx: any) => {
-                  const isMonthly = tx.type === "monthly" || tx.notes === "Monthly ₹1,000 Admin Entry";
-                  return (
-                  <tr key={tx.id} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-2 text-sm">{new Date(tx.date).toLocaleDateString()}</td>
-                    <td className={`px-4 py-2 text-sm font-medium ${isMonthly ? "text-purple-600" : tx.color}`}>
-                      {isMonthly ? "Monthly Investment" : tx.type}
-                    </td>
-                    <td className={`px-4 py-2 text-right font-medium ${tx.color}`}>
-                      {tx.type === "Withdrawal" ? "-" : "+"}₹{tx.amount.toLocaleString("en-IN")}
-                    </td>
-                    {isAdmin && (
-                      <td className="px-4 py-2 text-right print:hidden">
-                        <div className="flex justify-end gap-3">
-                          <button onClick={() => handleDeleteTransaction(tx)} className="text-red-500 hover:text-red-700 text-xs font-bold">Delete</button>
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                )})}
-                {data.investments.length === 0 && data.withdrawals.length === 0 && (
-                  <tr><td colSpan={isAdmin ? 4 : 3} className="p-4 text-center text-gray-500">No transactions yet</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
+              )})}
+              {data.investments.length === 0 && data.withdrawals.length === 0 && data.profitDistributions.length === 0 && (
+                <tr><td colSpan={isAdmin ? 4 : 3} className="p-4 text-center text-gray-500">No transactions yet</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
-
-        {isAdmin && (
-          <div className="print:hidden">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 sticky top-24">
-              <h2 className="text-lg font-semibold mb-4 text-gray-800">New Transaction</h2>
-              {error && <div className="bg-red-50 text-red-700 p-2 rounded mb-4 text-sm">{error}</div>}
-              
-              <form onSubmit={handleTransaction} className="space-y-4">
-                <label className="block">
-                  <span className="text-sm font-medium text-gray-700">Type</span>
-                  <select value={txType} onChange={(e) => setTxType(e.target.value as any)} className="mt-1 w-full border rounded px-3 py-2">
-                    <option value="investment">Add Investment</option>
-                    <option value="withdrawal">Withdraw Funds</option>
-                  </select>
-                </label>
-                
-                <label className="block">
-                  <span className="text-sm font-medium text-gray-700">Amount (₹)</span>
-                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required min="1" className="mt-1 w-full border rounded px-3 py-2" />
-                </label>
-
-                <label className="block">
-                  <span className="text-sm font-medium text-gray-700">Transaction Date</span>
-                  <input type="date" value={txDate} onChange={(e) => setTxDate(e.target.value)} required className="mt-1 w-full border rounded px-3 py-2" />
-                </label>
-
-                <label className="block">
-                  <span className="text-sm font-medium text-gray-700">Notes (Optional)</span>
-                  <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} className="mt-1 w-full border rounded px-3 py-2" />
-                </label>
-                
-                <button type="submit" className={`w-full py-2 rounded text-white font-medium ${txType === "investment" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}>
-                  {txType === "investment" ? "Add Funds" : "Withdraw Funds"}
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
