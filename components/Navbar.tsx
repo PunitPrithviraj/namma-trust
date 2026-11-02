@@ -14,8 +14,7 @@ import {
   KeyRound, 
   ShieldCheck, 
   LogOut, 
-  Menu,
-  Info
+  Menu
 } from "lucide-react";
 
 export default function Navbar() {
@@ -88,18 +87,6 @@ export default function Navbar() {
                 <Link href="/investor-portal" className={getLinkClass("/investor-portal")}>
                   <LayoutDashboard className="w-3.5 h-3.5" /> My Portal
                 </Link>
-                <Link href="/shared/investors" className={getLinkClass("/shared/investors")}>
-                  <Users2 className="w-3.5 h-3.5" /> Investors
-                </Link>
-                <Link href="/shared/loans" className={getLinkClass("/shared/loans")}>
-                  <Banknote className="w-3.5 h-3.5" /> Loans
-                </Link>
-                <Link href="/shared/profits" className={getLinkClass("/shared/profits")}>
-                  <TrendingUp className="w-3.5 h-3.5" /> Profits
-                </Link>
-                <Link href="/about" className={getLinkClass("/about")}>
-                  <Info className="w-3.5 h-3.5" /> About
-                </Link>
               </>
             )}
             
@@ -145,10 +132,6 @@ export default function Navbar() {
           ) : (
              <>
               <Link href="/investor-portal" onClick={() => setIsOpen(false)} className={getLinkClass("/investor-portal", true)}>My Portal</Link>
-              <Link href="/shared/investors" onClick={() => setIsOpen(false)} className={getLinkClass("/shared/investors", true)}>All Investors</Link>
-              <Link href="/shared/loans" onClick={() => setIsOpen(false)} className={getLinkClass("/shared/loans", true)}>All Loans</Link>
-              <Link href="/shared/profits" onClick={() => setIsOpen(false)} className={getLinkClass("/shared/profits", true)}>All Profits</Link>
-              <Link href="/about" onClick={() => setIsOpen(false)} className={getLinkClass("/about", true)}>About</Link>
              </>
           )}
           
@@ -157,6 +140,12 @@ export default function Navbar() {
           <Link href="/account/password" onClick={() => setIsOpen(false)} className={getLinkClass("/account/password", true)}>
             Change Password
           </Link>
+
+          {isAdmin && (
+            <Link href="/admin/passwords" onClick={() => setIsOpen(false)} className={getLinkClass("/admin/passwords", true)}>
+              Manage Passwords
+            </Link>
+          )}
 
           <button 
             onClick={() => signOut({ callbackUrl: "/login" })}
@@ -169,4 +158,3 @@ export default function Navbar() {
     </nav>
   );
 }
-
