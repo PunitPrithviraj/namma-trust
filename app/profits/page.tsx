@@ -6,6 +6,7 @@ import Link from "next/link";
 export default function ProfitsPage() {
   const [cycles, setCycles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null); // 👈 Added for buttons
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -70,6 +71,39 @@ export default function ProfitsPage() {
     } else {
       setError(typeof data.error === "string" ? data.error : "Failed to create cycle.");
     }
+  }
+
+  // 👈 NEW: DISTRIBUTE PROFIT FUNCTION
+  async function handleDistribute(id: string) {
+    if (!confirm("Are you sure you want to distribute this profit to all investors? This cannot be undone.")) return;
+    setActionLoading(id);
+    const res = await fetch(`/api/cycles/${id}/distribute`, { method: "POST" });
+    if (res.ok) {
+      alert("Profit distributed successfully!");
+      loadCycles();
+    } else {
+      const err = await res.json();
+      alert(err.error || "Failed to distribute");
+    }
+    setActionLoading(null);
+  }
+
+  // 👈 NEW: DELETE CYCLE FUNCTION
+  async function handleDelete(id: string, status: string) {
+    const msg = status === "distributed" 
+      ? "WARNING: This profit is already distributed. Deleting it will REMOVE the profit from all investors' balances. Are you sure?"
+      : "Are you sure you want to delete this cycle entry?";
+      
+    if (!confirm(msg)) return;
+    setActionLoading(id);
+    const res = await fetch(`/api/cycles/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      loadCycles();
+    } else {
+      const err = await res.json();
+      alert(err.error || "Failed to delete");
+    }
+    setActionLoading(null);
   }
 
   return (
@@ -157,11 +191,11 @@ export default function ProfitsPage() {
           <thead className="bg-gray-50 text-gray-600 text-sm border-b">
             <tr>
               <th className="px-6 py-4">Cycle Month</th>
-              <th className="px-6 py-4">Entry Date</th> {/* 👈 Added to differentiate entries */}
+              <th className="px-6 py-4">Entry Date</th>
               <th className="px-6 py-4 text-right">Interest Collected</th>
               <th className="px-6 py-4 text-right">Total Distributed</th>
               <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right">Action</th>
+              <th className="px-6 py-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -187,9 +221,29 @@ export default function ProfitsPage() {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <Link href={`/profits/${cycle.id}`} className="text-blue-600 hover:underline text-sm font-medium">
-                    View Details
-                  </Link>
+                  <div className="flex justify-end items-center gap-3">
+                    
+                    {/* 👈 ADDED: DISTRIBUTE BUTTON */}
+                    {cycle.status === "open" && (
+                      <button 
+                        onClick={() => handleDistribute(cycle.id)}
+                        disabled={actionLoading === cycle.id}
+                        className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {actionLoading === cycle.id ? "..." : "Distribute"}
+                      </button>
+                    )}
+                    
+                    {/* 👈 ADDED: DELETE BUTTON */}
+                    <button 
+                      onClick={() => handleDelete(cycle.id, cycle.status)}
+                      disabled={actionLoading === cycle.id}
+                      className="text-red-600 hover:text-red-800 text-xs font-bold disabled:opacity-50"
+                    >
+                      Delete
+                    </button>
+
+                  </div>
                 </td>
               </tr>
             ))}
