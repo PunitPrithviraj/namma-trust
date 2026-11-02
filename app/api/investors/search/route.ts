@@ -19,29 +19,22 @@ export async function GET(req: Request) {
           { code: { contains: query, mode: "insensitive" } },
         ],
       },
-      orderBy: { code: "asc" }, // 👈 Sort by Investor ID
+      orderBy: { code: "asc" },
       include: {
         investments: true,
         withdrawals: true,
-        loans: { where: { status: "active" }, include: { schedule: true } },
+        // 👈 CHANGE 1: Fetch ALL loans, not just active ones
+        loans: { include: { schedule: true } },
         profitDistributions: true,
       },
     });
 
-    // Map the data to include the exact totals needed by the frontend
     const enrichedInvestors = investors.map((inv) => {
-      // 1. Regular Investment (Sum of actual deposits)
       const totalInvestment = inv.investments.reduce((s, i) => s + i.amount, 0);
-      
-      // 2. Profit Up to Date (Sum of all profit distributions)
       const totalProfit = inv.profitDistributions.reduce((s, p) => s + p.shareAmount, 0);
 
-      // 3. Active Loans (Outstanding principal)
-      let totalLoan = 0;
-      inv.loans.forEach((loan) => {
-        const lastSchedule = loan.schedule[loan.schedule.length - 1];
-        totalLoan += lastSchedule ? lastSchedule.closingPrincipal : loan.principalAmount;
-      });
+      // 👈 CHANGE 2: Calculate Total Loan Taken (Matches Investor Side)
+      const totalLoan = inv.loans.reduce((sum, loan) => sum + loan.principalAmount, 0);
 
       return {
         ...inv,

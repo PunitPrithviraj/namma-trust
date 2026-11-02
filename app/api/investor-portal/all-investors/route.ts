@@ -26,14 +26,11 @@ export async function GET(req: Request) {
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    // Map data and apply privacy filtering
     const sharedData = investors.map((inv) => {
-      // 1. Total Invested = Regular Investments + Profit
       const totalRegular = inv.investments.reduce((s, i) => s + i.amount, 0);
       const totalProfit = inv.profitDistributions.reduce((s, p) => s + p.shareAmount, 0);
       const totalInvested = totalRegular + totalProfit;
 
-      // 2. This Month Investment (including ₹1000 monthly)
       const thisMonthInvestment = inv.investments
         .filter((i) => {
           const d = new Date(i.date);
@@ -41,15 +38,12 @@ export async function GET(req: Request) {
         })
         .reduce((s, i) => s + i.amount, 0);
 
-      // 3. Loan Taken (Total Sanctioned Principal)
       const loanTaken = inv.loans.reduce((s, l) => s + l.principalAmount, 0);
 
-      // 4. Repayments Made (Actual paid amounts)
       const repaymentsMade = inv.loans.reduce((sum, loan) => {
         return sum + loan.repayments.reduce((rs, rep) => rs + rep.amountPaid, 0);
       }, 0);
 
-      // Return ONLY public fields
       return {
         id: inv.id,
         code: inv.code || "N/A",
