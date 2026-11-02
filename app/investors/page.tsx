@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -9,10 +9,22 @@ function InvestorsListContent() {
   const [investors, setInvestors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [addingId, setAddingId] = useState<string | null>(null);
   const router = useRouter();
   const { data: session } = useSession();
   const isAdmin = (session?.user as any)?.role === "admin";
+
+  // --- NEW TRANSACTION STATE ---
+  const [isTxDropdownOpen, setIsTxDropdownOpen] = useState(false);
+  const txDropdownRef = useRef<HTMLDivElement>(null);
+  const [txSearch, setTxSearch] = useState("");
+  const [selectedInvestor, setSelectedInvestor] = useState<any>(null);
+  
+  const [txType, setTxType] = useState<"investment" | "withdrawal" | "profit">("investment");
+  const [amount, setAmount] = useState("");
+  const [notes, setNotes] = useState("");
+  const [txDate, setTxDate] = useState(new Date().toISOString().split("T")[0]);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [error, setError] = useState("");
 
   async function fetchInvestors(query: string) {
     try {
@@ -37,23 +49,57 @@ function InvestorsListContent() {
     return () => clearTimeout(delayDebounceFn);
   }, [search]);
 
+  // Close New Transaction dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (txDropdownRef.current && !txDropdownRef.current.contains(event.target as Node)) {
+        setIsTxDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   async function handleAddMonthly(id: string) {
-    setAddingId(id);
     const res = await fetch("/api/investors/monthly", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ investorId: id }),
     });
     const data = await res.json();
-    setAddingId(null);
+    if (res.ok) fetchInvestors(search);
+    else alert(data.error);
+  }
+
+  async function handleAddPastInvestment(id: string) {
+    const amountStr = prompt("Enter investment amount (₹):");
+    if (!amountStr) return;
+    const amount = Number(amountStr);
+    if (isNaN(amount) || amount <= 0) return alert("Invalid amount");
+
+    const dateStr = prompt("Enter date (YYYY-MM-DD):", new Date().toISOString().split("T")[0]);
+    if (!dateStr) return;
+
+    const res = await fetch("/api/transactions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        investorId: id,
+        amount,
+        type: "investment",
+        date: dateStr,
+        notes: "Past Investment Entry by Admin"
+      }),
+    });
     if (res.ok) {
-      fetchInvestors(search); // Refresh the table
+      alert("Investment added successfully!");
+      fetchInvestors(search);
     } else {
-      alert(data.error);
+      const err = await res.json();
+      alert(err.error || "Failed to add investment");
     }
   }
 
-  // Helper to check if they have a monthly investment this month
   function hasMonthlyInvestment(inv: any) {
     if (!inv.investments) return false;
     const now = new Date();
@@ -63,13 +109,166 @@ function InvestorsListContent() {
     });
   }
 
+  // --- SUBMIT NEW TRANSACTION ---
+  async function handleNewTransaction(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedInvestor) return setError("Please select an investor.");
+    setSubmitLoading(true);
+    setError("");
+
+    const res = await fetch("/api/transactions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        investorId: selectedInvestor.id,
+        amount: Number(amount),
+        type: txType,
+        notes,
+        date: txDate, 
+      }),
+    });
+
+    const resData = await res.json();
+    setSubmitLoading(false);
+
+    if (res.ok) {
+      setIsTxDropdownOpen(false);
+      setAmount("");
+      setNotes("");
+      setTxType("investment");
+      setSelectedInvestor(null);
+      setTxSearch("");
+      fetchInvestors(search); 
+    } else {
+      setError(typeof resData.error === "string" ? resData.error : "Transaction failed");
+    }
+  }
+
+  // Filter investors for the dropdown search
+  const dropdownInvestors = investors.filter((inv) => 
+    inv.name.toLowerCase().includes(txSearch.toLowerCase()) || 
+    inv.code?.toLowerCase().includes(txSearch.toLowerCase()) ||
+    inv.phone?.includes(txSearch)
+  ).slice(0, 5); // Show max 5 results
+
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h1 className="text-3xl font-bold text-gray-800">All Investors</h1>
-        <Link href="/investors/new" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium">
-          + Add Investor
-        </Link>
+        
+        {/* HEADER ACTIONS */}
+        <div className="flex gap-3 relative" ref={txDropdownRef}>
+          {isAdmin && (
+            <div>
+              <button 
+                onClick={() => setIsTxDropdownOpen(!isTxDropdownOpen)}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-medium"
+              >
+                + New Transaction
+              </button>
+
+              {isTxDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 p-5 z-50">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-bold text-gray-800">Add Entry</h2>
+                    <button onClick={() => setIsTxDropdownOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+                  </div>
+                  
+                  {error && <div className="bg-red-50 text-red-700 p-2 rounded mb-3 text-xs">{error}</div>}
+
+                  <form onSubmit={handleNewTransaction} className="space-y-4">
+                    
+                    {/* INVESTOR SEARCH SELECT */}
+                    <label className="block relative">
+                      <span className="text-xs font-medium text-gray-700">Select Investor</span>
+                      {selectedInvestor ? (
+                        <div className="mt-1 flex justify-between items-center border rounded px-3 py-1.5 bg-blue-50">
+                          <span className="text-sm font-medium text-blue-800">
+                            {selectedInvestor.name} ({selectedInvestor.code})
+                          </span>
+                          <button type="button" onClick={() => setSelectedInvestor(null)} className="text-blue-500 hover:text-blue-700 text-xs font-bold">Change</button>
+                        </div>
+                      ) : (
+                        <>
+                          <input
+                            type="text"
+                            placeholder="Search by name or ID..."
+                            value={txSearch}
+                            onChange={(e) => setTxSearch(e.target.value)}
+                            className="mt-1 w-full border rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
+                          />
+                          {txSearch && (
+                            <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-40 overflow-y-auto">
+                              {dropdownInvestors.map((inv) => (
+                                <div 
+                                  key={inv.id} 
+                                  onClick={() => {
+                                    setSelectedInvestor(inv);
+                                    setTxSearch("");
+                                  }}
+                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm border-b last:border-0"
+                                >
+                                  <span className="font-medium">{inv.name}</span> <span className="text-gray-500 text-xs ml-2">{inv.code}</span>
+                                </div>
+                              ))}
+                              {dropdownInvestors.length === 0 && (
+                                <div className="px-3 py-2 text-sm text-gray-500">No investor found</div>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </label>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="block">
+                        <span className="text-xs font-medium text-gray-700">Type</span>
+                        <select value={txType} onChange={(e) => setTxType(e.target.value as any)} className="mt-1 w-full border rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500">
+                          <option value="investment">Add Investment</option>
+                          <option value="withdrawal">Withdraw Funds</option>
+                          <option value="profit">Direct Profit Entry</option>
+                        </select>
+                      </label>
+                      
+                      <label className="block">
+                        <span className="text-xs font-medium text-gray-700">Amount (₹)</span>
+                        <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required min="1" className="mt-1 w-full border rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500" />
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="block">
+                        <span className="text-xs font-medium text-gray-700">Date</span>
+                        <input type="date" value={txDate} onChange={(e) => setTxDate(e.target.value)} required className="mt-1 w-full border rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500" />
+                      </label>
+
+                      <label className="block">
+                        <span className="text-xs font-medium text-gray-700">Notes (Optional)</span>
+                        <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} className="mt-1 w-full border rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500" />
+                      </label>
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      disabled={submitLoading || !selectedInvestor} 
+                      className={`w-full py-2 rounded text-white font-medium text-sm mt-2 disabled:opacity-50 ${
+                        txType === "investment" ? "bg-green-600 hover:bg-green-700" : 
+                        txType === "withdrawal" ? "bg-red-600 hover:bg-red-700" : 
+                        "bg-purple-600 hover:bg-purple-700"
+                      }`}
+                    >
+                      {submitLoading ? "Saving..." : "Save Transaction"}
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
+          )}
+
+          <Link href="/investors/new" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium">
+            + Add Investor
+          </Link>
+        </div>
       </div>
 
       <div className="mb-6">
@@ -94,10 +293,10 @@ function InvestorsListContent() {
                 <th className="px-6 py-4">Investor ID</th>
                 <th className="px-6 py-4">Name</th>
                 <th className="px-6 py-4">Phone</th>
-                {isAdmin && <th className="px-6 py-4 text-center">Monthly Investment</th>}
+                {isAdmin && <th className="px-6 py-4 text-center">Monthly ₹1k</th>}
                 <th className="px-6 py-4 text-right">Total Investment</th>
                 <th className="px-6 py-4 text-right">Active Loans</th>
-                <th className="px-6 py-4 text-right">Action</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -120,10 +319,9 @@ function InvestorsListContent() {
                         ) : (
                           <button
                             onClick={() => handleAddMonthly(inv.id)}
-                            disabled={addingId === inv.id}
-                            className="bg-blue-100 text-blue-700 px-3 py-1 rounded text-xs font-bold hover:bg-blue-200 disabled:opacity-50"
+                            className="bg-blue-100 text-blue-700 px-3 py-1 rounded text-xs font-bold hover:bg-blue-200"
                           >
-                            {addingId === inv.id ? "Adding..." : "₹1,000"}
+                            ₹1,000
                           </button>
                         )}
                       </td>
@@ -135,10 +333,13 @@ function InvestorsListContent() {
                     <td className="px-6 py-4 text-right text-blue-600 font-medium">
                       ₹{inv.totalLoan.toLocaleString("en-IN")}
                     </td>
+                    
                     <td className="px-6 py-4 text-right">
-                      <button onClick={() => router.push(`/investors/${inv.id}`)} className="text-blue-600 hover:underline text-sm font-medium">
-                        View Profile
-                      </button>
+                      <div className="flex justify-end gap-3">
+                        <button onClick={() => router.push(`/investors/${inv.id}`)} className="text-blue-600 hover:underline text-sm font-medium">
+                          View Profile
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
