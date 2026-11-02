@@ -18,8 +18,18 @@ async function DashboardContent() {
 
   // Fetch all data for calculations
   const [investors, loans, currentCycles] = await Promise.all([
-    prisma.investor.findMany({ include: { investments: true, withdrawals: true, profitDistributions: true } }),
-    prisma.loan.findMany({ where: { status: "active" } }),
+    prisma.investor.findMany({ 
+      include: { 
+        investments: true, 
+        withdrawals: true, 
+        profitDistributions: true 
+      } 
+    }),
+    // Fetch active loans and their schedules to find the true outstanding balance
+    prisma.loan.findMany({ 
+      where: { status: "active" },
+      include: { schedule: { orderBy: { monthNo: "asc" } } }
+    }),
     prisma.profitDistribution.findMany({
       where: { cycle: { cycleStart: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } } },
       include: { investor: true, cycle: true },
@@ -47,14 +57,26 @@ async function DashboardContent() {
   // 4. Total Investment = Regular + Profit
   const totalInvestment = totalTeamRegularInvestment + totalTeamProfit;
 
-  // 5. Total Loan Disbursed
+  // 5. Total Loan Disbursed (Original sanctioned amounts)
   const totalLoanAmount = loans.reduce((sum, l) => sum + l.principalAmount, 0);
   const activeLoanCount = loans.length;
 
-  // 6. Unspent Amount = (Regular Investment + Profit) - Withdrawals - Active Loans
-  const unspentAmount = totalInvestment - totalWithdrawn - totalLoanAmount;
+  // 6. TRUE OUTSTANDING LOAN BALANCE
+  // We look at the latest pending schedule. If the loan is fully paid, it is 0.
+  let totalOutstandingBalance = 0;
+  loans.forEach((loan) => {
+    const pendingSchedules = loan.schedule.filter(s => s.status === "pending");
+    if (pendingSchedules.length > 0) {
+      totalOutstandingBalance += pendingSchedules[0].openingPrincipal;
+    }
+  });
 
-  // 7. Recent Profit Distributions (Current Month)
+  // 7. UNSPENT CASH = (Total Cash In) - (Total Cash Out)
+  // Cash In: Investments + Profit
+  // Cash Out: Withdrawals + The actual outstanding principal (not the original loan amount)
+  const unspentAmount = totalInvestment - totalWithdrawn - totalOutstandingBalance;
+
+  // 8. Recent Profit Distributions (Current Month)
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   const thisMonthDistributions = currentCycles.filter(
@@ -83,6 +105,7 @@ async function DashboardContent() {
         >
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
           <p className="text-3xl font-bold text-gray-800 mt-2">₹{totalInvestment.toLocaleString("en-IN")}</p>
+          <p className="text-xs text-gray-400 mt-2">Includes Accrued Profit</p>
         </Link>
 
         {/* 2. Total Team Regular Investment */}
@@ -99,7 +122,7 @@ async function DashboardContent() {
           <p className="text-xs text-gray-400 mt-2">Credited Profit</p>
         </div>
 
-        {/* 4. Unspent Amount */}
+        {/* 4. Unspent Amount (UPDATED CALCULATION) */}
         <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-orange-500">
           <p className="text-sm font-medium text-gray-500 flex items-center gap-1">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
