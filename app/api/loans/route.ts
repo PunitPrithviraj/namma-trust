@@ -14,73 +14,57 @@ const loanSchema = z.object({
   notes: z.string().optional(),
 });
 
-// GET: List all loans, sorted by Loan ID (Code)
-export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  try {
-    const loans = await prisma.loan.findMany({
-      orderBy: { code: "asc" }, // 👈 Default sort by Loan ID
-      include: {
-        investor: true,
-        schedule: { orderBy: { monthNo: "asc" } },
-      },
-    });
-    return NextResponse.json(loans);
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch loans" }, { status: 500 });
-  }
-}
-
-// POST: Create Loan with Trust Fund Validation
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user as any).role !== "admin")
+  if (!session || (session.user as any).role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const body = await req.json();
   const parsed = loanSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues }, { status: 400 });
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues }, { status: 400 });
+  }
 
   const { investorId, principalAmount, termAmount, interestRate, loanTerm, startDate, notes } = parsed.data;
 
-  // Validation: Ensure termAmount * loanTerm covers the principal
   if (termAmount * loanTerm < principalAmount) {
     return NextResponse.json({ error: "Monthly principal × term is less than total loan. Increase term or monthly amount." }, { status: 400 });
   }
 
   try {
-    // Use a transaction to prevent race conditions
+    // Use a transaction to lock the database and prevent double-sanctioning
     const newLoanId = await prisma.$transaction(async (tx) => {
-      // 1. Calculate Available Trust Funds
+      
+      // 1. Calculate Available Funds
       const totalInvestments = await tx.investment.aggregate({ _sum: { amount: true } });
       const totalWithdrawals = await tx.withdrawal.aggregate({ _sum: { amount: true } });
+      const totalProfit = await tx.profitDistribution.aggregate({ _sum: { shareAmount: true } });
 
       const activeLoans = await tx.loan.findMany({
         where: { status: "active" },
         include: { schedule: true },
       });
 
-      let totalActiveOutstanding = 0;
+      let totalOutstanding = 0;
       activeLoans.forEach((loan) => {
+        // Outstanding is the closing principal of the latest schedule month
         const lastSchedule = loan.schedule[loan.schedule.length - 1];
-        totalActiveOutstanding += lastSchedule ? lastSchedule.closingPrincipal : loan.principalAmount;
+        totalOutstanding += lastSchedule ? lastSchedule.closingPrincipal : loan.principalAmount;
       });
 
-      const availableFunds =
-        (totalInvestments._sum.amount || 0) -
-        (totalWithdrawals._sum.amount || 0) -
-        totalActiveOutstanding;
+      const availableFunds = 
+        (totalInvestments._sum.amount || 0) + 
+        (totalProfit._sum.shareAmount || 0) - 
+        (totalWithdrawals._sum.amount || 0) - 
+        totalOutstanding;
 
       // 2. Validate against requested amount
       if (principalAmount > availableFunds) {
-        throw new Error(
-          `Insufficient Trust Funds. Available: ₹${availableFunds.toLocaleString("en-IN")}, Requested: ₹${principalAmount.toLocaleString("en-IN")}, Shortfall: ₹${(principalAmount - availableFunds).toLocaleString("en-IN")}`
-        );
+        throw new Error(`Insufficient Trust Funds.\nAvailable: ₹${availableFunds.toLocaleString("en-IN")}\nRequested: ₹${principalAmount.toLocaleString("en-IN")}\nShortfall: ₹${(principalAmount - availableFunds).toLocaleString("en-IN")}`);
       }
 
-      // 3. Code Generation
+      // 3. Generate Loan Code
       const lastLoan = await tx.loan.findFirst({
         where: { code: { startsWith: "LN-" } },
         orderBy: { code: "desc" },
@@ -104,12 +88,11 @@ export async function POST(req: Request) {
         },
       });
 
-      // 5. Generate Schedule (Math uses 1.5% on outstanding)
+      // 5. Generate Schedule
       let currentPrincipal = principalAmount;
       let monthNo = 1;
       const scheduleData = [];
 
-      // First due date: 9th of next month
       const loanDate = new Date(startDate);
       let nextDueDate = new Date(loanDate.getFullYear(), loanDate.getMonth() + 1, 9);
 
@@ -145,6 +128,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, loanId: newLoanId });
   } catch (error: any) {
     console.error("Loan creation error:", error);
+    // Return the exact error message so the frontend can show it in an alert
     return NextResponse.json(
       { error: error.message || "Failed to create loan" },
       { status: 400 }
