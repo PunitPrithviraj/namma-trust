@@ -40,7 +40,7 @@ function LoanContent() {
   useEffect(() => { loadLoan(); }, [id]);
 
   async function handlePay(scheduleId: string) {
-    if (!confirm("Mark this month as paid? This will add ₹1000 to the investor's balance.")) return;
+    if (!confirm("Mark this month as paid? This records the Term Amount and Interest.")) return;
     setPayingId(scheduleId);
     const res = await fetch("/api/repayments", {
       method: "POST",
@@ -58,7 +58,7 @@ function LoanContent() {
   async function handleDeletePayment(repaymentId: string, isExtra: boolean) {
     const msg = isExtra 
       ? "Delete this extra payment? The principal will be increased back." 
-      : "Undo this regular payment? The month will be marked as pending and the ₹1000 investment will be removed.";
+      : "Undo this regular payment? The month will be marked as pending.";
       
     if (!confirm(msg)) return;
     
@@ -275,7 +275,7 @@ function LoanContent() {
                     <div className="flex gap-4 text-xs text-gray-500 mt-2 bg-gray-50 p-2 rounded">
                       <span>Principal: ₹{rep.principalPart.toLocaleString("en-IN")}</span>
                       <span>Interest: ₹{rep.interestPart.toLocaleString("en-IN")}</span>
-                      <span>Inv: ₹{rep.extra1000Part.toLocaleString("en-IN")}</span>
+                      {/* Removed the 1000 Inv display from timeline */}
                     </div>
                   </div>
                 );

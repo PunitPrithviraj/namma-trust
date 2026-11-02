@@ -31,14 +31,18 @@ export async function POST(req: Request) {
   if (!schedule) return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
   if (schedule.status === "paid") return NextResponse.json({ error: "Already paid" }, { status: 400 });
 
-  const totalPaid = schedule.interestAmount + schedule.termAmount + schedule.extra1000;
+  // 👈 FIX: Only add Interest + Term Amount. NO automatic 1000 investment.
+  const totalPaid = schedule.interestAmount + schedule.termAmount;
 
   await prisma.repayment.create({
     data: {
-      loanId: schedule.loanId, scheduleId: schedule.id,
+      loanId: schedule.loanId, 
+      scheduleId: schedule.id,
       paidDate: paidDate ? new Date(paidDate) : new Date(),
-      amountPaid: totalPaid, principalPart: schedule.termAmount,
-      interestPart: schedule.interestAmount, extra1000Part: schedule.extra1000,
+      amountPaid: totalPaid, 
+      principalPart: schedule.termAmount,
+      interestPart: schedule.interestAmount, 
+      extra1000Part: 0, // Set to 0
     },
   });
 
@@ -47,13 +51,7 @@ export async function POST(req: Request) {
     data: { status: "paid" },
   });
 
-  await prisma.investment.create({
-    data: {
-      investorId: schedule.loan.investorId, amount: schedule.extra1000,
-      type: "loan_monthly", sourceLoanId: schedule.loanId,
-      notes: `Compulsory investment from Loan month ${schedule.monthNo}`,
-    },
-  });
+  // 👈 REMOVED the prisma.investment.create() block completely
 
   if (schedule.closingPrincipal <= 0) {
     await prisma.loan.update({
