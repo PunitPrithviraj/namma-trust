@@ -46,7 +46,7 @@ function InvestorsListContent() {
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => fetchInvestors(search), 300);
-    return () => clearTimeout(delayDebounceFn);
+    return () => clearTimeout(debounceFn);
   }, [search]);
 
   // Close New Transaction dropdown when clicking outside
@@ -69,35 +69,6 @@ function InvestorsListContent() {
     const data = await res.json();
     if (res.ok) fetchInvestors(search);
     else alert(data.error);
-  }
-
-  async function handleAddPastInvestment(id: string) {
-    const amountStr = prompt("Enter investment amount (₹):");
-    if (!amountStr) return;
-    const amount = Number(amountStr);
-    if (isNaN(amount) || amount <= 0) return alert("Invalid amount");
-
-    const dateStr = prompt("Enter date (YYYY-MM-DD):", new Date().toISOString().split("T")[0]);
-    if (!dateStr) return;
-
-    const res = await fetch("/api/transactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        investorId: id,
-        amount,
-        type: "investment",
-        date: dateStr,
-        notes: "Past Investment Entry by Admin"
-      }),
-    });
-    if (res.ok) {
-      alert("Investment added successfully!");
-      fetchInvestors(search);
-    } else {
-      const err = await res.json();
-      alert(err.error || "Failed to add investment");
-    }
   }
 
   function hasMonthlyInvestment(inv: any) {
@@ -200,16 +171,18 @@ function InvestorsListContent() {
                           {txSearch && (
                             <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-40 overflow-y-auto">
                               {dropdownInvestors.map((inv) => (
-                                <div 
+                                <button 
+                                  type="button" // 👈 ADDED to prevent form submission
                                   key={inv.id} 
-                                  onClick={() => {
+                                  onMouseDown={(e) => {
+                                    e.preventDefault(); // 👈 ADDED to prevent input blur before click
                                     setSelectedInvestor(inv);
                                     setTxSearch("");
                                   }}
-                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm border-b last:border-0"
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm border-b last:border-0"
                                 >
                                   <span className="font-medium">{inv.name}</span> <span className="text-gray-500 text-xs ml-2">{inv.code}</span>
-                                </div>
+                                </button>
                               ))}
                               {dropdownInvestors.length === 0 && (
                                 <div className="px-3 py-2 text-sm text-gray-500">No investor found</div>
