@@ -36,8 +36,10 @@ export default function InvestorPortal() {
   if (errorMsg) return <div className="p-8 text-center text-red-600 mt-20">{errorMsg}</div>;
   if (!data) return <div className="p-8 text-center mt-20">No data found.</div>;
 
-  const totalInvested = data.investments.reduce((sum: number, inv: any) => sum + inv.amount, 0);
+  // --- CALCULATIONS ---
+  const totalDeposits = data.investments.reduce((sum: number, inv: any) => sum + inv.amount, 0);
   const totalWithdrawn = data.withdrawals.reduce((sum: number, w: any) => sum + w.amount, 0);
+  const actualInvested = Math.max(0, totalDeposits - totalWithdrawn);
 
   let outstandingLoan = 0;
   data.loans.forEach((loan: any) => {
@@ -58,53 +60,38 @@ export default function InvestorPortal() {
     }
   });
 
-  const currentBalance = totalInvested + totalProfit - totalWithdrawn;
+  const currentBalance = totalDeposits + totalProfit - totalWithdrawn;
 
-  // Helper for active menu links
   const getLinkClass = (path: string) => {
     const isActive = pathname === path;
     return `flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-      isActive 
-        ? "bg-blue-50 text-blue-700" 
-        : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+      isActive ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
     }`;
   };
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
       
-      {/* 👈 TOP SUB-MENU (Beside My Data) */}
+      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 print:hidden">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Investor Portal</h1>
-          <p className="text-gray-500 mt-1">Welcome back, {data.name}</p>
+          <h1 className="text-3xl font-bold text-gray-800">Welcome back, {data.name}</h1>
+          <p className="text-gray-500 mt-1">Here is your personal financial overview.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-lg shadow-sm border border-gray-200">
-          <Link href="/investor-portal" className={getLinkClass("/investor-portal")}>
-            My Data
-          </Link>
-          <Link href="/shared/investors" className={getLinkClass("/shared/investors")}>
-            <Users2 className="w-4 h-4" /> Investors
-          </Link>
-          <Link href="/shared/loans" className={getLinkClass("/shared/loans")}>
-            <Banknote className="w-4 h-4" /> Loans
-          </Link>
-          <Link href="/shared/profits" className={getLinkClass("/shared/profits")}>
-            <TrendingUp className="w-4 h-4" /> Profits
-          </Link>
-          <Link href="/about" className={getLinkClass("/about")}>
-            <Info className="w-4 h-4" /> About
-          </Link>
+          <Link href="/investor-portal" className={getLinkClass("/investor-portal")}>My Data</Link>
+          <Link href="/shared/investors" className={getLinkClass("/shared/investors")}><Users2 className="w-4 h-4" /> Investors</Link>
+          <Link href="/shared/loans" className={getLinkClass("/shared/loans")}><Banknote className="w-4 h-4" /> Loans</Link>
+          <Link href="/shared/profits" className={getLinkClass("/shared/profits")}><TrendingUp className="w-4 h-4" /> Profits</Link>
+          <Link href="/about" className={getLinkClass("/about")}><Info className="w-4 h-4" /> About</Link>
         </div>
       </div>
 
       {/* PRINT HEADER */}
       <div className="hidden print:block mb-6">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid black', paddingBottom: '10px' }}>
-          <div>
-            <h1 style={{ fontSize: '26pt', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, lineHeight: 1 }}>Namma Trust</h1>
-          </div>
+          <div><h1 style={{ fontSize: '26pt', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, lineHeight: 1 }}>Namma Trust</h1></div>
           <div style={{ textAlign: 'right' }}>
             <p style={{ fontSize: '11pt', fontWeight: 'bold', textTransform: 'uppercase', margin: 0 }}>Investor Statement</p>
             <p style={{ fontSize: '9pt', color: '#555', margin: 0 }}>Generated: {new Date().toLocaleDateString("en-IN")}</p>
@@ -113,16 +100,13 @@ export default function InvestorPortal() {
 
         <div style={{ marginTop: '12px', fontSize: '13pt', fontWeight: 'bold', color: '#333' }}>
           {data.name} {data.code ? `(${data.code})` : ""} 
-          <span style={{ fontSize: '10pt', fontWeight: 'normal', color: '#666', marginLeft: '10px' }}>
-            {data.phone} • Joined: {new Date(data.joinDate).toLocaleDateString("en-IN")}
-          </span>
+          <span style={{ fontSize: '10pt', fontWeight: 'normal', color: '#666', marginLeft: '10px' }}>{data.phone} • Joined: {new Date(data.joinDate).toLocaleDateString("en-IN")}</span>
         </div>
 
         <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '24px', fontSize: '10pt', border: '1px solid #999', padding: '8px 12px', backgroundColor: '#f9f9f9' }}>
-          <div><strong>Total Investment:</strong> ₹{totalInvested.toLocaleString("en-IN")}</div>
+          <div><strong>Invested Amount:</strong> ₹{actualInvested.toLocaleString("en-IN")}</div>
           <div><strong>Outstanding Loan:</strong> ₹{outstandingLoan.toLocaleString("en-IN")}</div>
           <div><strong>Profit Earned:</strong> ₹{totalProfit.toLocaleString("en-IN")}</div>
-          <div><strong>This Month Profit:</strong> ₹{thisMonthProfit.toLocaleString("en-IN")}</div>
           <div><strong>Current Balance:</strong> ₹{currentBalance.toLocaleString("en-IN")}</div>
         </div>
       </div>
@@ -130,54 +114,53 @@ export default function InvestorPortal() {
       {/* SCREEN HEADER */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center print:hidden">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">{data.name}</h1>
+          <h2 className="text-2xl font-bold text-gray-800">{data.name}</h2>
           <p className="text-gray-500 mt-1">{data.email} • {data.phone}</p>
           <div className="flex gap-4 mt-2 text-sm text-gray-500">
             <span>ID: <strong className="font-mono text-gray-700">{data.code || "N/A"}</strong></span>
             <span>Joined: {new Date(data.joinDate).toLocaleDateString("en-IN")}</span>
           </div>
         </div>
-        
         <div className="mt-4 md:mt-0 flex flex-col items-end gap-2">
-          <div className="bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-bold">
-            ACCOUNT ACTIVE
-          </div>
-          <button 
-            onClick={() => window.print()}
-            className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 flex items-center gap-2"
-          >
-            🖨️ Print Full Statement
-          </button>
+          <div className="bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-bold">ACCOUNT ACTIVE</div>
+          <button onClick={() => window.print()} className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 flex items-center gap-2">🖨️ Print Full Statement</button>
         </div>
       </div>
 
-      {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 print:hidden">
-        <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-500">
-          <p className="text-sm font-medium text-gray-500">Total Investment</p>
-          <p className="text-3xl font-bold text-gray-800 mt-2">₹{totalInvested.toLocaleString("en-IN")}</p>
-        </div>
+      {/* 👈 SUMMARY CARDS (Including Trust Unspent Amount) */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8 print:hidden">
         
-        <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-red-500">
-          <p className="text-sm font-medium text-gray-500">Outstanding Loan</p>
-          <p className="text-3xl font-bold text-red-600 mt-2">₹{outstandingLoan.toLocaleString("en-IN")}</p>
+        <div className="bg-white p-5 rounded-lg shadow-sm border-t-4 border-green-500">
+          <p className="text-sm font-medium text-gray-500">Invested Amount</p>
+          <p className="text-2xl font-bold text-green-700 mt-2">₹{actualInvested.toLocaleString("en-IN")}</p>
+          <p className="text-xs text-gray-400 mt-1">Your Cash In</p>
         </div>
-        
-        <div className="bg-purple-50 p-6 rounded-lg shadow-sm border border-purple-200">
-          <p className="text-sm font-medium text-purple-700">Total Profit Earned</p>
-          <p className="text-3xl font-bold text-purple-800 mt-2">₹{totalProfit.toLocaleString("en-IN")}</p>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:hidden">
-        <div className="bg-green-50 p-6 rounded-lg shadow-sm border border-green-200">
-          <p className="text-sm font-medium text-green-700">Current Wallet Balance</p>
-          <p className="text-3xl font-bold text-green-800 mt-2">₹{currentBalance.toLocaleString("en-IN")}</p>
+        <div className="bg-white p-5 rounded-lg shadow-sm border-t-4 border-blue-500">
+          <p className="text-sm font-medium text-gray-500">Current Balance</p>
+          <p className="text-2xl font-bold text-blue-700 mt-2">₹{currentBalance.toLocaleString("en-IN")}</p>
+          <p className="text-xs text-gray-400 mt-1">Cash + Profit</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <p className="text-sm font-medium text-gray-500">This Month's Profit</p>
-          <p className="text-3xl font-bold text-gray-800 mt-2">₹{thisMonthProfit.toLocaleString("en-IN")}</p>
+        
+        <div className="bg-white p-5 rounded-lg shadow-sm border-t-4 border-purple-500">
+          <p className="text-sm font-medium text-gray-500">Total Profit</p>
+          <p className="text-2xl font-bold text-purple-700 mt-2">₹{totalProfit.toLocaleString("en-IN")}</p>
+          <p className="text-xs text-gray-400 mt-1">All Time</p>
         </div>
+        
+        <div className="bg-white p-5 rounded-lg shadow-sm border-t-4 border-red-500">
+          <p className="text-sm font-medium text-gray-500">Your Active Loan</p>
+          <p className="text-2xl font-bold text-red-600 mt-2">₹{outstandingLoan.toLocaleString("en-IN")}</p>
+          <p className="text-xs text-gray-400 mt-1">Pending Principal</p>
+        </div>
+
+        {/* 👈 THE NEW UNSPENT CARD */}
+        <div className="bg-orange-50 p-5 rounded-lg shadow-sm border border-orange-200">
+          <p className="text-sm font-medium text-orange-700">Trust Unspent Cash</p>
+          <p className="text-2xl font-bold text-orange-800 mt-2">₹{data.trustUnspentAmount?.toLocaleString("en-IN") || 0}</p>
+          <p className="text-xs text-orange-600 mt-1">Available to lend</p>
+        </div>
+
       </div>
 
       {/* DETAILED TABLES */}
