@@ -52,9 +52,19 @@ export async function GET() {
   
   const trustUnspentAmount = Math.max(0, totalCashIn - totalCashOut);
 
-  // Return investor data along with the Trust's unspent amount
+  // 3. Count Active Investors and Calculate Per-Investor Share
+  const activeInvestorCount = await prisma.investor.count({
+    where: { status: "active" }
+  });
+
+  const investorUnspentShare = activeInvestorCount > 0 
+    ? trustUnspentAmount / activeInvestorCount 
+    : 0;
+
+  // Return investor data along with the calculated shares
   return NextResponse.json({
     ...investorData,
-    trustUnspentAmount
+    trustUnspentAmount,
+    investorUnspentShare
   });
 }

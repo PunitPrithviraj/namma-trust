@@ -88,29 +88,6 @@ export default function InvestorPortal() {
         </div>
       </div>
 
-      {/* PRINT HEADER */}
-      <div className="hidden print:block mb-6">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid black', paddingBottom: '10px' }}>
-          <div><h1 style={{ fontSize: '26pt', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, lineHeight: 1 }}>Namma Trust</h1></div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: '11pt', fontWeight: 'bold', textTransform: 'uppercase', margin: 0 }}>Investor Statement</p>
-            <p style={{ fontSize: '9pt', color: '#555', margin: 0 }}>Generated: {new Date().toLocaleDateString("en-IN")}</p>
-          </div>
-        </div>
-
-        <div style={{ marginTop: '12px', fontSize: '13pt', fontWeight: 'bold', color: '#333' }}>
-          {data.name} {data.code ? `(${data.code})` : ""} 
-          <span style={{ fontSize: '10pt', fontWeight: 'normal', color: '#666', marginLeft: '10px' }}>{data.phone} • Joined: {new Date(data.joinDate).toLocaleDateString("en-IN")}</span>
-        </div>
-
-        <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '24px', fontSize: '10pt', border: '1px solid #999', padding: '8px 12px', backgroundColor: '#f9f9f9' }}>
-          <div><strong>Invested Amount:</strong> ₹{actualInvested.toLocaleString("en-IN")}</div>
-          <div><strong>Outstanding Loan:</strong> ₹{outstandingLoan.toLocaleString("en-IN")}</div>
-          <div><strong>Profit Earned:</strong> ₹{totalProfit.toLocaleString("en-IN")}</div>
-          <div><strong>Current Balance:</strong> ₹{currentBalance.toLocaleString("en-IN")}</div>
-        </div>
-      </div>
-
       {/* SCREEN HEADER */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center print:hidden">
         <div>
@@ -127,7 +104,7 @@ export default function InvestorPortal() {
         </div>
       </div>
 
-      {/* 👈 SUMMARY CARDS (Including Trust Unspent Amount) */}
+      {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8 print:hidden">
         
         <div className="bg-white p-5 rounded-lg shadow-sm border-t-4 border-green-500">
@@ -154,11 +131,13 @@ export default function InvestorPortal() {
           <p className="text-xs text-gray-400 mt-1">Pending Principal</p>
         </div>
 
-        {/* 👈 THE NEW UNSPENT CARD */}
+        {/* 👈 NEW CARD: EQUAL SHARE OF UNSPENT CASH */}
         <div className="bg-orange-50 p-5 rounded-lg shadow-sm border border-orange-200">
-          <p className="text-sm font-medium text-orange-700">Trust Unspent Cash</p>
-          <p className="text-2xl font-bold text-orange-800 mt-2">₹{data.trustUnspentAmount?.toLocaleString("en-IN") || 0}</p>
-          <p className="text-xs text-orange-600 mt-1">Available to lend</p>
+          <p className="text-sm font-medium text-orange-700">Your Unspent Cash Share</p>
+          <p className="text-2xl font-bold text-orange-800 mt-2">
+            ₹{data.investorUnspentShare ? data.investorUnspentShare.toLocaleString("en-IN", { maximumFractionDigits: 0 }) : 0}
+          </p>
+          <p className="text-xs text-orange-600 mt-1">Equal division of trust funds</p>
         </div>
 
       </div>
