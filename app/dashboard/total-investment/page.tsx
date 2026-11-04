@@ -7,23 +7,31 @@ import { useRouter } from "next/navigation";
 export default function TotalInvestmentPage() {
   const [investors, setInvestors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
-    // Fetch all investors with their related data
     fetch("/api/investors/search?q=", { cache: "no-store" })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch data");
+        return res.json();
+      })
       .then((data) => {
         if (Array.isArray(data)) {
-          // Sort by Investor ID ascending
           const sorted = data.sort((a: any, b: any) => (a.code || "").localeCompare(b.code || ""));
           setInvestors(sorted);
+        } else {
+          setError("Invalid data format received.");
         }
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Failed to load investors. Please try again.");
       })
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-8">Loading data...</div>;
+  if (loading) return <div className="p-8 text-center">Loading data...</div>;
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -34,6 +42,12 @@ export default function TotalInvestmentPage() {
         <h1 className="text-3xl font-bold text-gray-800">Total Investment Breakdown</h1>
         <p className="text-gray-500 mt-1">Investor-wise regular investments and total profit up to date.</p>
       </div>
+
+      {error && (
+        <div className="bg-red-50 text-red-700 p-4 rounded mb-6">
+          {error}
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="w-full text-left">
@@ -76,7 +90,7 @@ export default function TotalInvestmentPage() {
                 </tr>
               );
             })}
-            {investors.length === 0 && (
+            {investors.length === 0 && !loading && !error && (
               <tr>
                 <td colSpan={5} className="p-6 text-center text-gray-500">
                   No investors found.

@@ -23,7 +23,6 @@ export async function GET(req: Request) {
       include: {
         investments: true,
         withdrawals: true,
-        // 👈 CHANGE 1: Fetch ALL loans, not just active ones
         loans: { include: { schedule: true } },
         profitDistributions: true,
       },
@@ -33,8 +32,13 @@ export async function GET(req: Request) {
       const totalInvestment = inv.investments.reduce((s, i) => s + i.amount, 0);
       const totalProfit = inv.profitDistributions.reduce((s, p) => s + p.shareAmount, 0);
 
-      // 👈 CHANGE 2: Calculate Total Loan Taken (Matches Investor Side)
-      const totalLoan = inv.loans.reduce((sum, loan) => sum + loan.principalAmount, 0);
+      let totalLoan = 0;
+      inv.loans.forEach((loan) => {
+        if (loan.status === "active") {
+          const lastSchedule = loan.schedule[loan.schedule.length - 1];
+          totalLoan += lastSchedule ? lastSchedule.closingPrincipal : loan.principalAmount;
+        }
+      });
 
       return {
         ...inv,
