@@ -6,6 +6,20 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 
+// 👈 ADMIN ROUNDING: 0.1 to 0.91 rounds DOWN, 0.92+ rounds UP
+function adminRound(amount: number) {
+  const integerPart = Math.floor(amount);
+  const decimalPart = amount - integerPart;
+  
+  if (decimalPart > 0 && decimalPart <= 0.9199) {
+    return integerPart; // Round down
+  }
+  if (decimalPart > 0.9199) {
+    return integerPart + 1; // Round up
+  }
+  return integerPart;
+}
+
 async function DashboardContent() {
   await connection();
 
@@ -20,7 +34,6 @@ async function DashboardContent() {
     prisma.investor.findMany({ 
       include: { investments: true, withdrawals: true, profitDistributions: true } 
     }),
-    // Fetch active loans with schedules to calculate true outstanding balance
     prisma.loan.findMany({ 
       where: { status: "active" },
       include: { schedule: { orderBy: { monthNo: "asc" } } }
@@ -46,21 +59,18 @@ async function DashboardContent() {
 
   const totalInvestment = totalTeamRegularInvestment + totalTeamProfit;
 
-  // 👈 UPDATED: Calculate TRUE Active Loan Amount (Outstanding Principal)
   let activeLoanPrincipal = 0;
-  
   loans.forEach((loan) => {
     const pendingSchedules = loan.schedule.filter(s => s.status === "pending");
     if (pendingSchedules.length > 0) {
-      // Use the opening principal of the next unpaid month
       activeLoanPrincipal += pendingSchedules[0].openingPrincipal;
     }
   });
 
   const activeLoanCount = loans.length;
 
-  // Unspent Cash = Total Investment - Total Withdrawn - True Active Principal
-  const unspentAmount = totalInvestment - totalWithdrawn - activeLoanPrincipal;
+  const rawUnspentAmount = totalInvestment - totalWithdrawn - activeLoanPrincipal;
+  const unspentAmount = adminRound(rawUnspentAmount);
 
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
@@ -80,13 +90,8 @@ async function DashboardContent() {
         </span>
       </div>
 
-      {/* DASHBOARD CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        
-        <Link 
-          href="/dashboard/total-investment" 
-          className="block bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500 hover:scale-[1.02] transition-transform cursor-pointer"
-        >
+        <Link href="/dashboard/total-investment" className="block bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500 hover:scale-[1.02] transition-transform cursor-pointer">
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
           <p className="text-3xl font-bold text-gray-800 mt-2">₹{totalInvestment.toLocaleString("en-IN")}</p>
           <p className="text-xs text-gray-400 mt-2">Includes Accrued Profit</p>
@@ -110,7 +115,6 @@ async function DashboardContent() {
           <p className="text-xs text-gray-400 mt-2">Available Funds in Trust</p>
         </div>
 
-        {/* 👈 UPDATED: Shows True Outstanding Principal */}
         <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-indigo-500">
           <p className="text-sm font-medium text-gray-500">Loan Disbursed (Active)</p>
           <p className="text-3xl font-bold text-indigo-600 mt-2">₹{activeLoanPrincipal.toLocaleString("en-IN")}</p>
@@ -121,10 +125,8 @@ async function DashboardContent() {
           <p className="text-sm font-medium text-gray-500">Active Loans Count</p>
           <p className="text-3xl font-bold text-gray-800 mt-2">{activeLoanCount}</p>
         </div>
-
       </div>
 
-      {/* RECENT PROFIT DISTRIBUTIONS */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-5 border-b bg-gray-50 flex justify-between items-center">
           <h2 className="text-lg font-bold text-gray-800">Recent Profit Distributions (This Month)</h2>

@@ -6,6 +6,20 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Users2, Banknote, TrendingUp, Info, Plus } from "lucide-react";
 
+// 👈 INVESTOR ROUNDING: Exact Opposite (0.1 to 0.91 rounds UP, 0.92+ rounds DOWN)
+function investorRound(amount: number) {
+  const integerPart = Math.floor(amount);
+  const decimalPart = amount - integerPart;
+  
+  if (decimalPart > 0 && decimalPart <= 0.9199) {
+    return integerPart + 1; // Round UP
+  }
+  if (decimalPart > 0.9199) {
+    return integerPart; // Round DOWN
+  }
+  return integerPart;
+}
+
 export default function InvestorPortal() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -15,7 +29,6 @@ export default function InvestorPortal() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // LOAN REQUEST STATE
   const [isRequestOpen, setIsRequestOpen] = useState(false);
   const [reqAmount, setReqAmount] = useState("");
   const [reqPurpose, setReqPurpose] = useState("");
@@ -40,7 +53,6 @@ export default function InvestorPortal() {
     }
   }, [status, session]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (requestRef.current && !requestRef.current.contains(event.target as Node)) {
@@ -79,7 +91,6 @@ export default function InvestorPortal() {
   if (errorMsg) return <div className="p-8 text-center text-red-600 mt-20">{errorMsg}</div>;
   if (!data) return <div className="p-8 text-center mt-20">No data found.</div>;
 
-  // --- CALCULATIONS ---
   const totalDeposits = data.investments.reduce((sum: number, inv: any) => sum + inv.amount, 0);
   const totalWithdrawn = data.withdrawals.reduce((sum: number, w: any) => sum + w.amount, 0);
   
@@ -88,14 +99,13 @@ export default function InvestorPortal() {
     totalProfit += pd.shareAmount;
   });
 
-  // 2. Current Balance = Deposits + Profit - Withdrawals
   const currentBalance = totalDeposits + totalProfit - totalWithdrawn;
-
-  // 3. Invested Amount = Current Balance - (Unspent Cash Share)
   const investorUnspentShare = data.investorUnspentShare || 0;
-  const investedAmount = currentBalance - investorUnspentShare;
 
-  // 4. Loan calculations
+  // 👈 Apply the exact opposite rounding here
+  const rawInvestedAmount = currentBalance - investorUnspentShare;
+  const investedAmount = investorRound(Math.max(0, rawInvestedAmount));
+
   let outstandingLoan = 0;
   data.loans.forEach((loan: any) => {
     const firstPending = loan.schedule.find((s: any) => s.status === "pending");
@@ -111,8 +121,6 @@ export default function InvestorPortal() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 print:hidden">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Welcome back, {data.name}</h1>
@@ -128,7 +136,6 @@ export default function InvestorPortal() {
         </div>
       </div>
 
-      {/* SCREEN HEADER */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center print:hidden">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">{data.name}</h2>
@@ -140,12 +147,7 @@ export default function InvestorPortal() {
         </div>
         
         <div className="mt-4 md:mt-0 flex flex-col items-end gap-2 relative" ref={requestRef}>
-          
-          {/* 👈 LOAN REQUEST BUTTON & POPUP */}
-          <button 
-            onClick={() => setIsRequestOpen(!isRequestOpen)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2 font-medium"
-          >
+          <button onClick={() => setIsRequestOpen(!isRequestOpen)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2 font-medium">
             <Plus className="w-4 h-4" /> Request Loan
           </button>
 
@@ -166,14 +168,7 @@ export default function InvestorPortal() {
 
                 <label className="block">
                   <span className="text-xs font-medium text-gray-700">Purpose of Loan</span>
-                  <textarea 
-                    value={reqPurpose} 
-                    onChange={(e) => setReqPurpose(e.target.value)} 
-                    required 
-                    rows={3}
-                    className="mt-1 w-full border rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500" 
-                    placeholder="e.g., Business expansion, Medical emergency..."
-                  />
+                  <textarea value={reqPurpose} onChange={(e) => setReqPurpose(e.target.value)} required rows={3} className="mt-1 w-full border rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500" placeholder="e.g., Business expansion, Medical emergency..." />
                 </label>
 
                 <button type="submit" disabled={reqLoading} className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50 font-medium text-sm mt-2">
@@ -187,10 +182,7 @@ export default function InvestorPortal() {
         </div>
       </div>
 
-      {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8 print:hidden">
-        
-        {/* 👈 INVESTED AMOUNT = Current Balance - Unspent Share */}
         <div className="bg-white p-5 rounded-lg shadow-sm border-t-4 border-green-500">
           <p className="text-sm font-medium text-gray-500">Invested Amount</p>
           <p className="text-2xl font-bold text-green-700 mt-2">₹{investedAmount.toLocaleString("en-IN")}</p>
@@ -220,10 +212,8 @@ export default function InvestorPortal() {
           <p className="text-2xl font-bold text-orange-800 mt-2">₹{investorUnspentShare.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
           <p className="text-xs text-orange-600 mt-1">Available in trust</p>
         </div>
-
       </div>
 
-      {/* DETAILED TABLES */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 print:shadow-none print:border-black">
         <div className="p-4 border-b bg-gray-50 font-semibold text-blue-700 print:bg-white print:text-black">Investment History</div>
         <table className="w-full text-sm">
