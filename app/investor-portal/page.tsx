@@ -6,18 +6,9 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Users2, Banknote, TrendingUp, Info, Plus } from "lucide-react";
 
-// 👈 INVESTOR ROUNDING: Exact Opposite (0.1 to 0.91 rounds UP, 0.92+ rounds DOWN)
+// 👈 UPDATED ROUNDING: Always rounds down (floor)
 function investorRound(amount: number) {
-  const integerPart = Math.floor(amount);
-  const decimalPart = amount - integerPart;
-  
-  if (decimalPart > 0 && decimalPart <= 0.9199) {
-    return integerPart + 1; // Round UP
-  }
-  if (decimalPart > 0.9199) {
-    return integerPart; // Round DOWN
-  }
-  return integerPart;
+  return Math.floor(amount);
 }
 
 export default function InvestorPortal() {
@@ -102,7 +93,7 @@ export default function InvestorPortal() {
   const currentBalance = totalDeposits + totalProfit - totalWithdrawn;
   const investorUnspentShare = data.investorUnspentShare || 0;
 
-  // 👈 Apply the exact opposite rounding here
+  // 👈 Apply floor rounding
   const rawInvestedAmount = currentBalance - investorUnspentShare;
   const investedAmount = investorRound(Math.max(0, rawInvestedAmount));
 
