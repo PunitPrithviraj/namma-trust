@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { Users2, Banknote, TrendingUp, Info } from "lucide-react";
+import { Users2, Banknote, TrendingUp, Info, Plus } from "lucide-react";
 
 export default function InvestorPortal() {
   const { data: session, status } = useSession();
@@ -14,6 +14,14 @@ export default function InvestorPortal() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // LOAN REQUEST STATE
+  const [isRequestOpen, setIsRequestOpen] = useState(false);
+  const [reqAmount, setReqAmount] = useState("");
+  const [reqPurpose, setReqPurpose] = useState("");
+  const [reqLoading, setReqLoading] = useState(false);
+  const [reqError, setReqError] = useState("");
+  const requestRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -32,6 +40,41 @@ export default function InvestorPortal() {
     }
   }, [status, session]);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (requestRef.current && !requestRef.current.contains(event.target as Node)) {
+        setIsRequestOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  async function handleLoanRequest(e: React.FormEvent) {
+    e.preventDefault();
+    setReqLoading(true);
+    setReqError("");
+
+    const res = await fetch("/api/loans/request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: Number(reqAmount), purpose: reqPurpose }),
+    });
+
+    const resData = await res.json();
+    setReqLoading(false);
+
+    if (res.ok) {
+      setIsRequestOpen(false);
+      setReqAmount("");
+      setReqPurpose("");
+      alert("Loan request submitted successfully! The Admin will review it shortly.");
+    } else {
+      setReqError(resData.error || "Failed to submit request");
+    }
+  }
+
   if (loading || status === "loading") return <div className="p-8 text-center mt-20">Loading your portfolio...</div>;
   if (errorMsg) return <div className="p-8 text-center text-red-600 mt-20">{errorMsg}</div>;
   if (!data) return <div className="p-8 text-center mt-20">No data found.</div>;
@@ -39,28 +82,25 @@ export default function InvestorPortal() {
   // --- CALCULATIONS ---
   const totalDeposits = data.investments.reduce((sum: number, inv: any) => sum + inv.amount, 0);
   const totalWithdrawn = data.withdrawals.reduce((sum: number, w: any) => sum + w.amount, 0);
-  const actualInvested = Math.max(0, totalDeposits - totalWithdrawn);
+  
+  let totalProfit = 0;
+  data.profitDistributions.forEach((pd: any) => {
+    totalProfit += pd.shareAmount;
+  });
 
+  // 2. Current Balance = Deposits + Profit - Withdrawals
+  const currentBalance = totalDeposits + totalProfit - totalWithdrawn;
+
+  // 3. Invested Amount = Current Balance - (Unspent Cash Share)
+  const investorUnspentShare = data.investorUnspentShare || 0;
+  const investedAmount = currentBalance - investorUnspentShare;
+
+  // 4. Loan calculations
   let outstandingLoan = 0;
   data.loans.forEach((loan: any) => {
     const firstPending = loan.schedule.find((s: any) => s.status === "pending");
     if (firstPending) outstandingLoan += firstPending.openingPrincipal;
   });
-
-  let totalProfit = 0;
-  let thisMonthProfit = 0;
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
-
-  data.profitDistributions.forEach((pd: any) => {
-    totalProfit += pd.shareAmount;
-    const cycleDate = new Date(pd.cycle.cycleStart);
-    if (cycleDate.getMonth() === currentMonth && cycleDate.getFullYear() === currentYear) {
-      thisMonthProfit += pd.shareAmount;
-    }
-  });
-
-  const currentBalance = totalDeposits + totalProfit - totalWithdrawn;
 
   const getLinkClass = (path: string) => {
     const isActive = pathname === path;
@@ -98,8 +138,51 @@ export default function InvestorPortal() {
             <span>Joined: {new Date(data.joinDate).toLocaleDateString("en-IN")}</span>
           </div>
         </div>
-        <div className="mt-4 md:mt-0 flex flex-col items-end gap-2">
-          <div className="bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-bold">ACCOUNT ACTIVE</div>
+        
+        <div className="mt-4 md:mt-0 flex flex-col items-end gap-2 relative" ref={requestRef}>
+          
+          {/* 👈 LOAN REQUEST BUTTON & POPUP */}
+          <button 
+            onClick={() => setIsRequestOpen(!isRequestOpen)}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2 font-medium"
+          >
+            <Plus className="w-4 h-4" /> Request Loan
+          </button>
+
+          {isRequestOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 p-5 z-50 top-full">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-bold text-gray-800">Request a Loan</h2>
+                <button onClick={() => setIsRequestOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+              </div>
+              
+              {reqError && <div className="bg-red-50 text-red-700 p-2 rounded mb-3 text-xs">{reqError}</div>}
+
+              <form onSubmit={handleLoanRequest} className="space-y-4">
+                <label className="block">
+                  <span className="text-xs font-medium text-gray-700">Amount Required (₹)</span>
+                  <input type="number" value={reqAmount} onChange={(e) => setReqAmount(e.target.value)} required min="1" className="mt-1 w-full border rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500" />
+                </label>
+
+                <label className="block">
+                  <span className="text-xs font-medium text-gray-700">Purpose of Loan</span>
+                  <textarea 
+                    value={reqPurpose} 
+                    onChange={(e) => setReqPurpose(e.target.value)} 
+                    required 
+                    rows={3}
+                    className="mt-1 w-full border rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500" 
+                    placeholder="e.g., Business expansion, Medical emergency..."
+                  />
+                </label>
+
+                <button type="submit" disabled={reqLoading} className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50 font-medium text-sm mt-2">
+                  {reqLoading ? "Submitting..." : "Submit Request"}
+                </button>
+              </form>
+            </div>
+          )}
+
           <button onClick={() => window.print()} className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 flex items-center gap-2">🖨️ Print Full Statement</button>
         </div>
       </div>
@@ -107,10 +190,11 @@ export default function InvestorPortal() {
       {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8 print:hidden">
         
+        {/* 👈 INVESTED AMOUNT = Current Balance - Unspent Share */}
         <div className="bg-white p-5 rounded-lg shadow-sm border-t-4 border-green-500">
           <p className="text-sm font-medium text-gray-500">Invested Amount</p>
-          <p className="text-2xl font-bold text-green-700 mt-2">₹{actualInvested.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-gray-400 mt-1">Your Cash In</p>
+          <p className="text-2xl font-bold text-green-700 mt-2">₹{investedAmount.toLocaleString("en-IN")}</p>
+          <p className="text-xs text-gray-400 mt-1">Money out in loans</p>
         </div>
 
         <div className="bg-white p-5 rounded-lg shadow-sm border-t-4 border-blue-500">
@@ -131,13 +215,10 @@ export default function InvestorPortal() {
           <p className="text-xs text-gray-400 mt-1">Pending Principal</p>
         </div>
 
-        {/* 👈 NEW CARD: EQUAL SHARE OF UNSPENT CASH */}
         <div className="bg-orange-50 p-5 rounded-lg shadow-sm border border-orange-200">
-          <p className="text-sm font-medium text-orange-700">Your Unspent Cash Share</p>
-          <p className="text-2xl font-bold text-orange-800 mt-2">
-            ₹{data.investorUnspentShare ? data.investorUnspentShare.toLocaleString("en-IN", { maximumFractionDigits: 0 }) : 0}
-          </p>
-          <p className="text-xs text-orange-600 mt-1">Equal division of trust funds</p>
+          <p className="text-sm font-medium text-orange-700">Your Unspent Share</p>
+          <p className="text-2xl font-bold text-orange-800 mt-2">₹{investorUnspentShare.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+          <p className="text-xs text-orange-600 mt-1">Available in trust</p>
         </div>
 
       </div>

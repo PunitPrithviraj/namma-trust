@@ -16,16 +16,10 @@ async function DashboardContent() {
     redirect("/investor-portal");
   }
 
-  // Fetch all data for calculations
   const [investors, loans, currentCycles] = await Promise.all([
     prisma.investor.findMany({ 
-      include: { 
-        investments: true, 
-        withdrawals: true, 
-        profitDistributions: true 
-      } 
+      include: { investments: true, withdrawals: true, profitDistributions: true } 
     }),
-    // Fetch active loans and their schedules to find the true outstanding balance
     prisma.loan.findMany({ 
       where: { status: "active" },
       include: { schedule: { orderBy: { monthNo: "asc" } } }
@@ -37,46 +31,37 @@ async function DashboardContent() {
     })
   ]);
 
-  // --- CALCULATIONS ---
-  
-  // 1. Regular Investment (Sum of all actual investments)
   const totalTeamRegularInvestment = investors.reduce((sum, inv) => 
     sum + inv.investments.reduce((s, i) => s + i.amount, 0), 0
   );
 
-  // 2. Total Profit (Sum of all distributed profits)
   const totalTeamProfit = investors.reduce((sum, inv) => 
     sum + inv.profitDistributions.reduce((s, p) => s + p.shareAmount, 0), 0
   );
 
-  // 3. Total Withdrawals
   const totalWithdrawn = investors.reduce((sum, inv) => 
     sum + inv.withdrawals.reduce((s, w) => s + w.amount, 0), 0
   );
 
-  // 4. Total Investment = Regular + Profit
   const totalInvestment = totalTeamRegularInvestment + totalTeamProfit;
 
-  // 5. Total Loan Disbursed (Original sanctioned amounts)
-  const totalLoanAmount = loans.reduce((sum, l) => sum + l.principalAmount, 0);
-  const activeLoanCount = loans.length;
-
-  // 6. TRUE OUTSTANDING LOAN BALANCE
-  // We look at the latest pending schedule. If the loan is fully paid, it is 0.
+  // 👈 NEW: Calculate Active Loan Amount (Principal)
+  let totalActiveLoanAmount = 0;
   let totalOutstandingBalance = 0;
+
   loans.forEach((loan) => {
+    totalActiveLoanAmount += loan.principalAmount; // Sum of original active loan amounts
     const pendingSchedules = loan.schedule.filter(s => s.status === "pending");
     if (pendingSchedules.length > 0) {
       totalOutstandingBalance += pendingSchedules[0].openingPrincipal;
     }
   });
 
-  // 7. UNSPENT CASH = (Total Cash In) - (Total Cash Out)
-  // Cash In: Investments + Profit
-  // Cash Out: Withdrawals + The actual outstanding principal (not the original loan amount)
+  const activeLoanCount = loans.length;
+
+  // Unspent Cash
   const unspentAmount = totalInvestment - totalWithdrawn - totalOutstandingBalance;
 
-  // 8. Recent Profit Distributions (Current Month)
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   const thisMonthDistributions = currentCycles.filter(
@@ -96,9 +81,8 @@ async function DashboardContent() {
       </div>
 
       {/* DASHBOARD CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         
-        {/* 1. Total Investment (Regular + Profit) - CLICKABLE */}
         <Link 
           href="/dashboard/total-investment" 
           className="block bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500 hover:scale-[1.02] transition-transform cursor-pointer"
@@ -108,40 +92,34 @@ async function DashboardContent() {
           <p className="text-xs text-gray-400 mt-2">Includes Accrued Profit</p>
         </Link>
 
-        {/* 2. Total Team Regular Investment */}
         <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-500">
           <p className="text-sm font-medium text-gray-500">Total Team Regular Investment</p>
           <p className="text-3xl font-bold text-blue-600 mt-2">₹{totalTeamRegularInvestment.toLocaleString("en-IN")}</p>
           <p className="text-xs text-gray-400 mt-2">Actual Deposits Only</p>
         </div>
 
-        {/* 3. Total Team Profit */}
         <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-purple-500">
           <p className="text-sm font-medium text-gray-500">Total Team Profit</p>
           <p className="text-3xl font-bold text-purple-600 mt-2">₹{totalTeamProfit.toLocaleString("en-IN")}</p>
           <p className="text-xs text-gray-400 mt-2">Credited Profit</p>
         </div>
 
-        {/* 4. Unspent Amount (UPDATED CALCULATION) */}
         <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-orange-500">
-          <p className="text-sm font-medium text-gray-500 flex items-center gap-1">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-            Unspent Cash
-          </p>
+          <p className="text-sm font-medium text-gray-500 flex items-center gap-1">Unspent Cash</p>
           <p className="text-3xl font-bold text-orange-600 mt-2">₹{unspentAmount.toLocaleString("en-IN")}</p>
           <p className="text-xs text-gray-400 mt-2">Available Funds in Trust</p>
         </div>
 
-        {/* 5. Total Loans */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-gray-500">
-          <p className="text-sm font-medium text-gray-500">Total Loans Disbursed</p>
-          <p className="text-3xl font-bold text-gray-800 mt-2">₹{totalLoanAmount.toLocaleString("en-IN")}</p>
+        {/* 👈 NEW: Loan Disbursed Card */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-indigo-500">
+          <p className="text-sm font-medium text-gray-500">Loan Disbursed</p>
+          <p className="text-3xl font-bold text-indigo-600 mt-2">₹{totalActiveLoanAmount.toLocaleString("en-IN")}</p>
+          <p className="text-xs text-gray-400 mt-2">Active Loan Principal</p>
         </div>
 
-        {/* 6. Active Loans */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-red-500">
-          <p className="text-sm font-medium text-gray-500">Active Loans</p>
-          <p className="text-3xl font-bold text-red-600 mt-2">{activeLoanCount}</p>
+        <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-gray-500">
+          <p className="text-sm font-medium text-gray-500">Total Loans</p>
+          <p className="text-3xl font-bold text-gray-800 mt-2">{activeLoanCount}</p>
         </div>
 
       </div>
@@ -150,7 +128,7 @@ async function DashboardContent() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-5 border-b bg-gray-50 flex justify-between items-center">
           <h2 className="text-lg font-bold text-gray-800">Recent Profit Distributions (This Month)</h2>
-          <Link href="/cycles" className="text-sm text-blue-600 hover:underline font-medium">
+          <Link href="/profits" className="text-sm text-blue-600 hover:underline font-medium">
             Manage Cycles
           </Link>
         </div>
