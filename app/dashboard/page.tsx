@@ -20,6 +20,7 @@ async function DashboardContent() {
     prisma.investor.findMany({ 
       include: { investments: true, withdrawals: true, profitDistributions: true } 
     }),
+    // Fetch active loans with schedules to calculate true outstanding balance
     prisma.loan.findMany({ 
       where: { status: "active" },
       include: { schedule: { orderBy: { monthNo: "asc" } } }
@@ -45,22 +46,21 @@ async function DashboardContent() {
 
   const totalInvestment = totalTeamRegularInvestment + totalTeamProfit;
 
-  // 👈 NEW: Calculate Active Loan Amount (Principal)
-  let totalActiveLoanAmount = 0;
-  let totalOutstandingBalance = 0;
-
+  // 👈 UPDATED: Calculate TRUE Active Loan Amount (Outstanding Principal)
+  let activeLoanPrincipal = 0;
+  
   loans.forEach((loan) => {
-    totalActiveLoanAmount += loan.principalAmount; // Sum of original active loan amounts
     const pendingSchedules = loan.schedule.filter(s => s.status === "pending");
     if (pendingSchedules.length > 0) {
-      totalOutstandingBalance += pendingSchedules[0].openingPrincipal;
+      // Use the opening principal of the next unpaid month
+      activeLoanPrincipal += pendingSchedules[0].openingPrincipal;
     }
   });
 
   const activeLoanCount = loans.length;
 
-  // Unspent Cash
-  const unspentAmount = totalInvestment - totalWithdrawn - totalOutstandingBalance;
+  // Unspent Cash = Total Investment - Total Withdrawn - True Active Principal
+  const unspentAmount = totalInvestment - totalWithdrawn - activeLoanPrincipal;
 
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
@@ -110,15 +110,15 @@ async function DashboardContent() {
           <p className="text-xs text-gray-400 mt-2">Available Funds in Trust</p>
         </div>
 
-        {/* 👈 NEW: Loan Disbursed Card */}
+        {/* 👈 UPDATED: Shows True Outstanding Principal */}
         <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-indigo-500">
-          <p className="text-sm font-medium text-gray-500">Loan Disbursed</p>
-          <p className="text-3xl font-bold text-indigo-600 mt-2">₹{totalActiveLoanAmount.toLocaleString("en-IN")}</p>
-          <p className="text-xs text-gray-400 mt-2">Active Loan Principal</p>
+          <p className="text-sm font-medium text-gray-500">Loan Disbursed (Active)</p>
+          <p className="text-3xl font-bold text-indigo-600 mt-2">₹{activeLoanPrincipal.toLocaleString("en-IN")}</p>
+          <p className="text-xs text-gray-400 mt-2">Outstanding Principal</p>
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-sm border-t-4 border-gray-500">
-          <p className="text-sm font-medium text-gray-500">Total Loans</p>
+          <p className="text-sm font-medium text-gray-500">Active Loans Count</p>
           <p className="text-3xl font-bold text-gray-800 mt-2">{activeLoanCount}</p>
         </div>
 
