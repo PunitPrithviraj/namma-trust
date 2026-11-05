@@ -19,6 +19,7 @@ export default function InvestorPortal() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+  const [cancelLoading, setCancelLoading] = useState<string | null>(null);
 
   const [isRequestOpen, setIsRequestOpen] = useState(false);
   const [reqAmount, setReqAmount] = useState("");
@@ -27,22 +28,22 @@ export default function InvestorPortal() {
   const [reqError, setReqError] = useState("");
   const requestRef = useRef<HTMLDivElement>(null);
 
+  async function loadData() {
+    setLoading(true);
+    fetch("/api/investor-portal")
+      .then((res) => res.json())
+      .then((d) => {
+        if (d.error) setErrorMsg(d.error);
+        else setData(d);
+      })
+      .finally(() => setLoading(false));
+  }
+
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
     if (status === "authenticated" && (session?.user as any)?.role !== "investor") router.push("/dashboard");
+    else if (status === "authenticated") loadData();
   }, [status, session, router]);
-
-  useEffect(() => {
-    if (status === "authenticated" && (session?.user as any)?.role === "investor") {
-      fetch("/api/investor-portal")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.error) setErrorMsg(data.error);
-          else setData(data);
-        })
-        .finally(() => setLoading(false));
-    }
-  }, [status, session]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -73,8 +74,25 @@ export default function InvestorPortal() {
       setReqAmount("");
       setReqPurpose("");
       alert("Loan request submitted successfully! The Admin will review it shortly.");
+      loadData(); // Refresh table
     } else {
       setReqError(resData.error || "Failed to submit request");
+    }
+  }
+
+  // 👈 CANCEL REQUEST FUNCTION
+  async function handleCancelRequest(id: string) {
+    if (!confirm("Are you sure you want to cancel this loan request?")) return;
+    setCancelLoading(id);
+    const res = await fetch(`/api/loans/request/${id}`, { method: "DELETE" });
+    const resData = await res.json();
+    setCancelLoading(null);
+
+    if (res.ok) {
+      alert("Request cancelled successfully.");
+      loadData();
+    } else {
+      alert(resData.error || "Failed to cancel");
     }
   }
 
@@ -98,7 +116,7 @@ export default function InvestorPortal() {
 
   let outstandingLoan = 0;
   data.loans.forEach((loan: any) => {
-    const firstPending = loan.schedule.find((s: any) => s.status === "pending");
+    const firstPending = loan.schedule?.find((s: any) => s.status === "pending");
     if (firstPending) outstandingLoan += firstPending.openingPrincipal;
   });
 
@@ -172,9 +190,7 @@ export default function InvestorPortal() {
         </div>
       </div>
 
-      {/* 👈 UPDATED CARDS (No Current Balance, Includes Total Investment) */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8 print:hidden">
-        
         <Link href="/investor-portal/invested-amount" className="block bg-white p-5 rounded-lg shadow-sm border-t-4 border-green-500 hover:scale-[1.02] transition-transform cursor-pointer">
           <p className="text-sm font-medium text-gray-500">Invested Amount</p>
           <p className="text-2xl font-bold text-green-700 mt-2">₹{investedAmount.toLocaleString("en-IN")}</p>
@@ -205,7 +221,56 @@ export default function InvestorPortal() {
           <p className="text-xs text-orange-600 mt-1">Available in trust</p>
         </div>
       </div>
-      {/* DETAILED TABLES */}
+
+      {/* 👈 NEW: LOAN REQUEST HISTORY TABLE */}
+      {data.loans && data.loans.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 print:hidden">
+          <div className="p-4 border-b bg-gray-50 font-semibold text-gray-800">My Loan Request History</div>
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-4 py-2 text-gray-500">Date Requested</th>
+                <th className="text-left px-4 py-2 text-gray-500">Amount</th>
+                <th className="text-left px-4 py-2 text-gray-500">Purpose</th>
+                <th className="text-left px-4 py-2 text-gray-500">Status</th>
+                <th className="text-right px-4 py-2 text-gray-500">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.loans.sort((a:any, b:any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((loan: any) => (
+                <tr key={loan.id} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-3 text-gray-600">{new Date(loan.createdAt).toLocaleDateString("en-IN")}</td>
+                  <td className="px-4 py-3 font-bold text-blue-600">₹{loan.principalAmount.toLocaleString("en-IN")}</td>
+                  <td className="px-4 py-3 text-gray-600">{loan.notes?.replace("REQUEST: ", "") || "N/A"}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded text-xs font-bold ${
+                      loan.status === "requested" ? "bg-yellow-100 text-yellow-700" :
+                      loan.status === "active" ? "bg-green-100 text-green-700" :
+                      loan.status === "declined" ? "bg-red-100 text-red-700" :
+                      "bg-gray-100 text-gray-700"
+                    }`}>
+                      {loan.status.toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {loan.status === "requested" && (
+                      <button 
+                        onClick={() => handleCancelRequest(loan.id)}
+                        disabled={cancelLoading === loan.id}
+                        className="text-red-500 hover:text-red-700 text-xs font-bold disabled:opacity-50"
+                      >
+                        {cancelLoading === loan.id ? "Cancelling..." : "Cancel Request"}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* OTHER DETAILED TABLES */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 print:shadow-none print:border-black">
         <div className="p-4 border-b bg-gray-50 font-semibold text-blue-700 print:bg-white print:text-black">Investment History</div>
         <table className="w-full text-sm">
@@ -224,38 +289,6 @@ export default function InvestorPortal() {
                 <td className="px-4 py-3 text-right text-green-600 font-medium">+₹{inv.amount.toLocaleString("en-IN")}</td>
               </tr>
             ))}
-            {data.investments.length === 0 && <tr><td colSpan={3} className="p-4 text-center">No investments</td></tr>}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 print:shadow-none print:border-black">
-        <div className="p-4 border-b bg-gray-50 font-semibold text-red-700 print:bg-white print:text-black">Loan History</div>
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 print:bg-white">
-            <tr>
-              <th className="text-left px-4 py-2 text-gray-500">Loan ID</th>
-              <th className="text-left px-4 py-2 text-gray-500">Date</th>
-              <th className="text-right px-4 py-2 text-gray-500">Principal</th>
-              <th className="text-right px-4 py-2 text-gray-500">Outstanding</th>
-              <th className="text-left px-4 py-2 text-gray-500">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.loans.map((loan: any) => {
-              const firstPending = loan.schedule.find((s: any) => s.status === "pending");
-              const outstanding = firstPending ? firstPending.openingPrincipal : 0;
-              return (
-                <tr key={loan.id} className="border-b">
-                  <td className="px-4 py-3 font-mono">{loan.code || "N/A"}</td>
-                  <td className="px-4 py-3">{new Date(loan.startDate).toLocaleDateString("en-IN")}</td>
-                  <td className="px-4 py-3 text-right">₹{loan.principalAmount.toLocaleString("en-IN")}</td>
-                  <td className="px-4 py-3 text-right text-red-600 font-medium">₹{outstanding.toLocaleString("en-IN")}</td>
-                  <td className="px-4 py-3 uppercase text-xs font-bold">{loan.status}</td>
-                </tr>
-              );
-            })}
-            {data.loans.length === 0 && <tr><td colSpan={5} className="p-4 text-center">No loans</td></tr>}
           </tbody>
         </table>
       </div>
@@ -278,7 +311,6 @@ export default function InvestorPortal() {
                 <td className="px-4 py-3 text-right font-bold text-green-600 bg-yellow-50 print:bg-white">+₹{pd.shareAmount.toLocaleString("en-IN")}</td>
               </tr>
             ))}
-            {data.profitDistributions.length === 0 && <tr><td colSpan={3} className="p-4 text-center">No profits yet</td></tr>}
           </tbody>
           <tfoot>
             <tr className="bg-yellow-100 print:bg-white border-t-2 border-black">
