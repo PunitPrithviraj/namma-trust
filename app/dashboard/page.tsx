@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import NotificationBar from "./NotificationBar";
 
 // 👈 ADMIN ROUNDING: 0.1 to 0.91 rounds DOWN, 0.92+ rounds UP
 function adminRound(amount: number) {
@@ -85,6 +86,8 @@ async function DashboardContent() {
           <h1 className="text-3xl font-bold text-gray-800">Welcome, {session.user?.name || "Admin"}</h1>
           <p className="text-gray-500 mt-1">Namma Trust Financial Overview</p>
         </div>
+	<div className="flex items-center gap-4">
+	<NotificationBar />
         <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
           {(session.user as any).role?.toUpperCase()}
         </span>
