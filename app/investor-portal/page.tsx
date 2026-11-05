@@ -173,7 +173,7 @@ export default function InvestorPortal() {
       </div>
 
       {/* 👈 UPDATED CARDS (No Current Balance, Includes Total Investment) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 print:hidden">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8 print:hidden">
         
         <Link href="/investor-portal/invested-amount" className="block bg-white p-5 rounded-lg shadow-sm border-t-4 border-green-500 hover:scale-[1.02] transition-transform cursor-pointer">
           <p className="text-sm font-medium text-gray-500">Invested Amount</p>
@@ -181,7 +181,6 @@ export default function InvestorPortal() {
           <p className="text-xs text-blue-500 mt-1 font-medium">View History &rarr;</p>
         </Link>
 
-        {/* 👈 REPLACED CURRENT BALANCE WITH TOTAL INVESTMENT */}
         <Link href="/investor-portal/total-investment" className="block bg-white p-5 rounded-lg shadow-sm border-t-4 border-blue-500 hover:scale-[1.02] transition-transform cursor-pointer">
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
           <p className="text-2xl font-bold text-blue-700 mt-2">₹{currentBalance.toLocaleString("en-IN")}</p>
@@ -200,8 +199,12 @@ export default function InvestorPortal() {
           <p className="text-xs text-blue-500 mt-1 font-medium">View Details &rarr;</p>
         </Link>
 
+        <div className="bg-orange-50 p-5 rounded-lg shadow-sm border border-orange-200">
+          <p className="text-sm font-medium text-orange-700">Your Unspent Share</p>
+          <p className="text-2xl font-bold text-orange-800 mt-2">₹{investorUnspentShare.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+          <p className="text-xs text-orange-600 mt-1">Available in trust</p>
+        </div>
       </div>
-
       {/* DETAILED TABLES */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 print:shadow-none print:border-black">
         <div className="p-4 border-b bg-gray-50 font-semibold text-blue-700 print:bg-white print:text-black">Investment History</div>
