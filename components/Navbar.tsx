@@ -14,7 +14,8 @@ import {
   KeyRound, 
   ShieldCheck, 
   LogOut, 
-  Menu
+  Menu,
+  Bell
 } from "lucide-react";
 
 export default function Navbar() {
@@ -75,6 +76,10 @@ export default function Navbar() {
                 <Link href="/loans" className={getLinkClass("/loans")}>
                   <Banknote className="w-3.5 h-3.5" /> Loans
                 </Link>
+                {/* 👈 ADDED LOAN REQUESTS TAB */}
+                <Link href="/loans/requests" className={getLinkClass("/loans/requests")}>
+                  <Bell className="w-3.5 h-3.5" /> Requests
+                </Link>
                 <Link href="/profits" className={getLinkClass("/profits")}>
                   <TrendingUp className="w-3.5 h-3.5" /> Profits
                 </Link>
@@ -126,6 +131,7 @@ export default function Navbar() {
               <Link href="/dashboard" onClick={() => setIsOpen(false)} className={getLinkClass("/dashboard", true)}>Dashboard</Link>
               <Link href="/investors" onClick={() => setIsOpen(false)} className={getLinkClass("/investors", true)}>Investors</Link>
               <Link href="/loans" onClick={() => setIsOpen(false)} className={getLinkClass("/loans", true)}>Loans</Link>
+              <Link href="/loans/requests" onClick={() => setIsOpen(false)} className={getLinkClass("/loans/requests", true)}>Requests</Link>
               <Link href="/profits" onClick={() => setIsOpen(false)} className={getLinkClass("/profits", true)}>Profits</Link>
               <Link href="/audit" onClick={() => setIsOpen(false)} className={getLinkClass("/audit", true)}>Audit</Link>
              </>
