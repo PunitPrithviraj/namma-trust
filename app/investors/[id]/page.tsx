@@ -47,7 +47,6 @@ function InvestorContent() {
 
   useEffect(() => { load(); }, [id]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -86,6 +85,26 @@ function InvestorContent() {
       load(); 
     } else {
       setError(typeof resData.error === "string" ? resData.error : "Transaction failed");
+    }
+  }
+
+  async function handleCreateLogin() {
+    const email = prompt("Enter login email for investor:", data.email || "");
+    const password = prompt("Enter a password (min 6 chars):");
+    if (!email || !password) return;
+
+    const res = await fetch(`/api/investors/${id}/create-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    
+    if (res.ok) {
+      alert("Login created successfully!");
+      load();
+    } else {
+      const err = await res.json();
+      alert(err.error || "Failed to create login");
     }
   }
 
@@ -162,13 +181,30 @@ function InvestorContent() {
             <button onClick={() => window.print()} className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900">
               🖨️ Print
             </button>
+            
             {isAdmin && (
               <button onClick={handleDeleteInvestor} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
                 Delete
               </button>
             )}
+
+            {/* 👈 CREATE LOGIN BUTTON ADDED HERE */}
+            {isAdmin && !data.user && (
+              <button 
+                onClick={handleCreateLogin}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-medium"
+              >
+                Create Login
+              </button>
+            )}
             
-            {/* 👈 NEW TRANSACTION DROPDOWN */}
+            {data.user && (
+              <span className="bg-green-100 text-green-800 px-3 py-2 rounded text-sm font-medium flex items-center">
+                Login: {data.user.email}
+              </span>
+            )}
+            
+            {/* NEW TRANSACTION DROPDOWN */}
             {isAdmin && (
               <div>
                 <button 

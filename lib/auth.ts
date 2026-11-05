@@ -10,20 +10,23 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        identifier: { label: "Email, Phone, or ID", type: "text" },
+        identifier: { label: "Phone or Investor ID", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.identifier || !credentials?.password) return null;
 
-        // Find user by Email, Phone Number, OR by Investor Code
+        // 👈 Find user ONLY by Phone Number OR Investor Code
         const user = await prisma.user.findFirst({
           where: {
             OR: [
-              { email: credentials.identifier },               // Admin email
+	      { email: credentials.identifier }, 
               { phone: credentials.identifier },               // Investor phone
               { investor: { code: credentials.identifier } }   // Investor code (e.g. INV-001)
             ]
+          },
+          include: {
+            investor: true
           }
         });
 
