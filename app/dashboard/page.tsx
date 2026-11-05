@@ -81,16 +81,19 @@ async function DashboardContent() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
+      {/* 👈 FIXED HEADER SECTION */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Welcome, {session.user?.name || "Admin"}</h1>
           <p className="text-gray-500 mt-1">Namma Trust Financial Overview</p>
         </div>
-	<div className="flex items-center gap-4">
-	<NotificationBar />
-        <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-          {(session.user as any).role?.toUpperCase()}
-        </span>
+        
+        <div className="flex items-center gap-4">
+          <NotificationBar />
+          <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+            {(session.user as any).role?.toUpperCase()}
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
