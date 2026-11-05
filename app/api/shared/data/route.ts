@@ -35,7 +35,7 @@ export async function GET() {
       return {
         id: inv.id,
         code: inv.code || "N/A",
-        name: inv.name, // Public
+        name: inv.name,
         totalInvested: totalRegular + totalProfit,
         thisMonthInvestment,
         loanTaken,
@@ -43,7 +43,7 @@ export async function GET() {
       };
     });
 
-    // 2. Fetch Loans (Strip private data)
+    // 2. Fetch Loans
     const loansRaw = await prisma.loan.findMany({
       orderBy: { code: "asc" },
       include: { investor: true, schedule: true },
@@ -71,7 +71,7 @@ export async function GET() {
     // 3. Fetch Profit Cycles
     const cyclesRaw = await prisma.monthlyCycle.findMany({
       orderBy: { cycleStart: "desc" },
-      where: { status: "distributed" }, // Only show completed cycles
+      where: { status: "distributed" },
     });
 
     const profits = cyclesRaw.map((c) => ({
@@ -82,9 +82,23 @@ export async function GET() {
       distributedAt: c.distributedAt,
     }));
 
-    return NextResponse.json({ investors, loans, profits });
+    // 4. 👈 FETCH PENDING LOAN REQUESTS
+    const pendingRequestsRaw = await prisma.loan.findMany({
+      where: { status: "requested" },
+      include: { investor: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const pendingRequests = pendingRequestsRaw.map((req) => ({
+      id: req.id,
+      borrower: req.investor.name,
+      amount: req.principalAmount,
+      purpose: req.notes?.replace("REQUEST: ", "") || "N/A",
+      date: req.createdAt,
+    }));
+
+    return NextResponse.json({ investors, loans, profits, pendingRequests });
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch shared data" }, { status: 500 });
   }
 }
-

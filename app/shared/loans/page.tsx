@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 export default function SharedLoansPage() {
   const [data, setData] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -11,6 +12,7 @@ export default function SharedLoansPage() {
       .then((res) => res.json())
       .then((resData) => {
         if (resData.loans) setData(resData.loans);
+        if (resData.pendingRequests) setRequests(resData.pendingRequests);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -20,6 +22,27 @@ export default function SharedLoansPage() {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold text-gray-800 mb-6">All Loans</h1>
+
+      {/* 👈 PENDING REQUESTS FEED */}
+      {requests.length > 0 && (
+        <div className="mb-8 bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <h2 className="font-bold text-orange-800 mb-3 text-lg">Pending Loan Requests</h2>
+          <div className="space-y-2">
+            {requests.map((req) => (
+              <div key={req.id} className="bg-white p-3 rounded shadow-sm border border-orange-100 flex flex-col md:flex-row justify-between md:items-center gap-2">
+                <div>
+                  <p className="font-semibold text-gray-800">{req.borrower}</p>
+                  <p className="text-sm text-gray-600">Purpose: {req.purpose}</p>
+                </div>
+                <div className="text-left md:text-right">
+                  <p className="font-bold text-orange-600">₹{req.amount.toLocaleString("en-IN")}</p>
+                  <p className="text-xs text-gray-400">{new Date(req.date).toLocaleDateString("en-IN")}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow overflow-x-auto">
         <table className="w-full text-left whitespace-nowrap">
