@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -6,7 +7,6 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Users2, Banknote, TrendingUp, Info, Plus } from "lucide-react";
 
-// ROUNDING FUNCTION: Always rounds down (floor)
 function investorRound(amount: number) {
   return Math.floor(amount);
 }
@@ -74,13 +74,12 @@ export default function InvestorPortal() {
       setReqAmount("");
       setReqPurpose("");
       alert("Loan request submitted successfully! The Admin will review it shortly.");
-      loadData(); // Refresh table
+      loadData();
     } else {
       setReqError(resData.error || "Failed to submit request");
     }
   }
 
-  // 👈 CANCEL REQUEST FUNCTION
   async function handleCancelRequest(id: string) {
     if (!confirm("Are you sure you want to cancel this loan request?")) return;
     setCancelLoading(id);
@@ -128,7 +127,7 @@ export default function InvestorPortal() {
   };
 
   return (
-	<div className="p-4 md:p-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 print:hidden">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Welcome back, {data.name}</h1>
@@ -190,8 +189,7 @@ export default function InvestorPortal() {
         </div>
       </div>
 
-
-	<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-8 print:hidden">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8 print:hidden">
         <Link href="/investor-portal/invested-amount" className="block bg-white p-5 rounded-lg shadow-sm border-t-4 border-green-500 hover:scale-[1.02] transition-transform cursor-pointer">
           <p className="text-sm font-medium text-gray-500">Invested Amount</p>
           <p className="text-2xl font-bold text-green-700 mt-2">₹{investedAmount.toLocaleString("en-IN")}</p>
@@ -221,9 +219,19 @@ export default function InvestorPortal() {
           <p className="text-2xl font-bold text-orange-800 mt-2">₹{investorUnspentShare.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
           <p className="text-xs text-orange-600 mt-1">Available in trust</p>
         </div>
+
+        {/* 👈 NEW CARD: EXPECTED TRUST COLLECTION */}
+        <div className="bg-teal-50 p-5 rounded-lg shadow-sm border border-teal-200 md:col-span-1 sm:col-span-2">
+          <p className="text-sm font-bold text-teal-800">Expected Trust Collection</p>
+          <p className="text-2xl font-bold text-teal-700 mt-2">₹{data.trustExpected?.grandTotal.toLocaleString("en-IN") || 0}</p>
+          <div className="mt-2 text-xs text-teal-700 space-y-1">
+            <div className="flex justify-between"><span>EMI Due:</span> <span>₹{data.trustExpected?.emi.toLocaleString("en-IN") || 0}</span></div>
+            <div className="flex justify-between"><span>Monthly ₹1k:</span> <span>₹{data.trustExpected?.monthly1000.toLocaleString("en-IN") || 0}</span></div>
+            <div className="flex justify-between"><span>Extra:</span> <span>₹{data.trustExpected?.extra.toLocaleString("en-IN") || 0}</span></div>
+          </div>
+        </div>
       </div>
 
-      {/* 👈 NEW: LOAN REQUEST HISTORY TABLE */}
       {data.loans && data.loans.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 print:hidden">
           <div className="p-4 border-b bg-gray-50 font-semibold text-gray-800">My Loan Request History</div>
@@ -271,7 +279,6 @@ export default function InvestorPortal() {
         </div>
       )}
 
-      {/* OTHER DETAILED TABLES */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6 print:shadow-none print:border-black">
         <div className="p-4 border-b bg-gray-50 font-semibold text-blue-700 print:bg-white print:text-black">Investment History</div>
         <table className="w-full text-sm">
