@@ -3,12 +3,19 @@
 import { useState, useRef, useEffect } from "react";
 import { Share2, ChevronDown } from "lucide-react";
 
-export default function AdminShareCenter() {
+// 👈 ACCEPT PROPS FOR REAL DATA
+interface ShareProps {
+  expectedEMI: number;
+  monthly1000: number;
+  extraExpected: number;
+  grandTotal: number;
+}
+
+export default function AdminShareCenter({ expectedEMI, monthly1000, extraExpected, grandTotal }: ShareProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [pendingLoans, setPendingLoans] = useState<any[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch pending loans when the component loads
   useEffect(() => {
     fetch("/api/loans/list?q=")
       .then((res) => res.json())
@@ -44,7 +51,8 @@ export default function AdminShareCenter() {
         text = `*Loan Approved* ✅\n\nA new loan has been successfully sanctioned and disbursed from the Trust. The EMI schedule has been generated and sent to the borrower.\n\n_Note: Check the Investor Portal for the latest active loans and schedules._`;
         break;
       case "expected":
-        text = `*Namma Trust - Monthly Expected Collection* 💰\n\nAs we progress through *${dateStr}*, here is the expected collection summary for the Trust:\n\n• Expected EMIs (Loans)\n• Monthly ₹1,000 Investments\n• Other Extra Collections\n\nLet's ensure all dues are cleared on time to keep our Trust financially strong!`;
+        // 👈 INJECT REAL DATA HERE
+        text = `*Namma Trust - Monthly Expected Collection* 💰\n\nAs we progress through *${dateStr}*, here is the expected collection summary for the Trust:\n\n• Expected EMIs (Loans): *₹${expectedEMI.toLocaleString("en-IN")}*\n• Monthly ₹1,000 Investments: *₹${monthly1000.toLocaleString("en-IN")}*\n• Other Extra Collections: *₹${extraExpected.toLocaleString("en-IN")}*\n\n*Total Expected:* *₹${grandTotal.toLocaleString("en-IN")}*\n\nLet's ensure all dues are cleared on time to keep our Trust financially strong!`;
         break;
       case "loan_requests":
         if (pendingLoans.length === 0) {

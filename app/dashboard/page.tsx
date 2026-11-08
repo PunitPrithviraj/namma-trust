@@ -107,7 +107,12 @@ async function DashboardContent() {
         </div>
         
         <div className="flex items-center gap-4">
-	 <AdminShareCenter />
+	 <AdminShareCenter 
+	    expectedEMI={totalExpectedEMI} 
+            monthly1000={expectedMonthlyInvestments} 
+            extraExpected={extraExpectedAmount} 
+            grandTotal={grandTotalExpected} 
+ />
           <NotificationBar />
           <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs md:text-sm font-medium">
             {(session.user as any).role?.toUpperCase()}
