@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import AdminShareCenter from "./AdminShareCenter";
 import NotificationBar from "./NotificationBar";
 import ExtraExpectedForm from "./ExtraExpectedForm";
 
@@ -106,6 +107,7 @@ async function DashboardContent() {
         </div>
         
         <div className="flex items-center gap-4">
+	 <AdminShareCenter />
           <NotificationBar />
           <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs md:text-sm font-medium">
             {(session.user as any).role?.toUpperCase()}
