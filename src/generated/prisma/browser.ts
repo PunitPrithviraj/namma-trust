@@ -67,3 +67,8 @@ export type ProfitDistribution = Prisma.ProfitDistributionModel
  * 
  */
 export type AuditLog = Prisma.AuditLogModel
+/**
+ * Model ExpectedIncome
+ * 
+ */
+export type ExpectedIncome = Prisma.ExpectedIncomeModel

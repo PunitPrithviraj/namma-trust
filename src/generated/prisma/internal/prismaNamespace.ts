@@ -406,7 +406,8 @@ export const ModelName = {
   Repayment: 'Repayment',
   MonthlyCycle: 'MonthlyCycle',
   ProfitDistribution: 'ProfitDistribution',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  ExpectedIncome: 'ExpectedIncome'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -422,7 +423,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "investor" | "investment" | "withdrawal" | "loan" | "loanSchedule" | "repayment" | "monthlyCycle" | "profitDistribution" | "auditLog"
+    modelProps: "user" | "investor" | "investment" | "withdrawal" | "loan" | "loanSchedule" | "repayment" | "monthlyCycle" | "profitDistribution" | "auditLog" | "expectedIncome"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1166,6 +1167,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ExpectedIncome: {
+      payload: Prisma.$ExpectedIncomePayload<ExtArgs>
+      fields: Prisma.ExpectedIncomeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ExpectedIncomeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedIncomePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ExpectedIncomeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedIncomePayload>
+        }
+        findFirst: {
+          args: Prisma.ExpectedIncomeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedIncomePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ExpectedIncomeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedIncomePayload>
+        }
+        findMany: {
+          args: Prisma.ExpectedIncomeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedIncomePayload>[]
+        }
+        create: {
+          args: Prisma.ExpectedIncomeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedIncomePayload>
+        }
+        createMany: {
+          args: Prisma.ExpectedIncomeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ExpectedIncomeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedIncomePayload>[]
+        }
+        delete: {
+          args: Prisma.ExpectedIncomeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedIncomePayload>
+        }
+        update: {
+          args: Prisma.ExpectedIncomeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedIncomePayload>
+        }
+        deleteMany: {
+          args: Prisma.ExpectedIncomeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ExpectedIncomeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ExpectedIncomeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedIncomePayload>[]
+        }
+        upsert: {
+          args: Prisma.ExpectedIncomeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedIncomePayload>
+        }
+        aggregate: {
+          args: Prisma.ExpectedIncomeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateExpectedIncome>
+        }
+        groupBy: {
+          args: Prisma.ExpectedIncomeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExpectedIncomeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ExpectedIncomeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExpectedIncomeCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1356,6 +1431,18 @@ export const AuditLogScalarFieldEnum = {
 } as const
 
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const ExpectedIncomeScalarFieldEnum = {
+  id: 'id',
+  month: 'month',
+  year: 'year',
+  amount: 'amount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ExpectedIncomeScalarFieldEnum = (typeof ExpectedIncomeScalarFieldEnum)[keyof typeof ExpectedIncomeScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1611,6 +1698,7 @@ export type GlobalOmitConfig = {
   monthlyCycle?: Prisma.MonthlyCycleOmit
   profitDistribution?: Prisma.ProfitDistributionOmit
   auditLog?: Prisma.AuditLogOmit
+  expectedIncome?: Prisma.ExpectedIncomeOmit
 }
 
 /* Types for Logging */

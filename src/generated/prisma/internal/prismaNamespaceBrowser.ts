@@ -60,7 +60,8 @@ export const ModelName = {
   Repayment: 'Repayment',
   MonthlyCycle: 'MonthlyCycle',
   ProfitDistribution: 'ProfitDistribution',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  ExpectedIncome: 'ExpectedIncome'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -230,6 +231,18 @@ export const AuditLogScalarFieldEnum = {
 } as const
 
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const ExpectedIncomeScalarFieldEnum = {
+  id: 'id',
+  month: 'month',
+  year: 'year',
+  amount: 'amount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ExpectedIncomeScalarFieldEnum = (typeof ExpectedIncomeScalarFieldEnum)[keyof typeof ExpectedIncomeScalarFieldEnum]
 
 
 export const SortOrder = {
