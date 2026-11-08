@@ -128,7 +128,7 @@ export default function InvestorPortal() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+	<div className="p-4 md:p-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 print:hidden">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Welcome back, {data.name}</h1>
@@ -190,7 +190,8 @@ export default function InvestorPortal() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8 print:hidden">
+
+	<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-8 print:hidden">
         <Link href="/investor-portal/invested-amount" className="block bg-white p-5 rounded-lg shadow-sm border-t-4 border-green-500 hover:scale-[1.02] transition-transform cursor-pointer">
           <p className="text-sm font-medium text-gray-500">Invested Amount</p>
           <p className="text-2xl font-bold text-green-700 mt-2">₹{investedAmount.toLocaleString("en-IN")}</p>

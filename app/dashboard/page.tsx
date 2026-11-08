@@ -96,7 +96,7 @@ async function DashboardContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+	<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
         <Link href="/dashboard/total-investment" className="block bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500 hover:scale-[1.02] transition-transform cursor-pointer">
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
           <p className="text-3xl font-bold text-gray-800 mt-2">₹{totalInvestment.toLocaleString("en-IN")}</p>
