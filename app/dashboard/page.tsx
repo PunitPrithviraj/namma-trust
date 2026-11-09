@@ -169,10 +169,10 @@ async function DashboardContent() {
 
           {/* Lock Button Component */}
           <LockExpectedAmount 
-            isLocked={!!lockedTarget}
+	    isLocked={!!lockedTarget}
             currentEMI={currentExpectedEMI}
             currentInv={currentExpectedInv}
-          />
+            initialExtra={displayExtra}          />
         </div>
       </div>
 
