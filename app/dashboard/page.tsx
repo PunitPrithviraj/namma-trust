@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import NotificationBar from "./NotificationBar";
 import AdminShareCenter from "./AdminShareCenter";
-import LockExpectedAmount from "./LockExpectedAmount"; // 👈 New Component
+import LockExpectedAmount from "./LockExpectedAmount";
 
 function adminRound(amount: number) {
   const integerPart = Math.floor(amount);
@@ -40,18 +40,17 @@ async function DashboardContent() {
     if (cycleMonth < 0) { cycleMonth = 11; cycleYear -= 1; }
   }
 
-  const [investors, loans, currentCycles, expectedSchedules, lockedTarget] = await Promise.all([
+  const [investors, loans, expectedSchedules, lockedTarget] = await Promise.all([
     prisma.investor.findMany({ 
-      include: { investments: true, withdrawals: true, profitDistributions: true } 
+      include: { 
+        investments: true, 
+        withdrawals: true, 
+        profitDistributions: true 
+      } 
     }),
     prisma.loan.findMany({ 
       where: { status: "active" },
       include: { schedule: { orderBy: { monthNo: "asc" } } }
-    }),
-    prisma.profitDistribution.findMany({
-      where: { cycle: { cycleStart: { gte: startOfCycle } } },
-      include: { investor: true, cycle: true },
-      orderBy: { cycle: { cycleStart: "desc" } },
     }),
     prisma.loanSchedule.findMany({
       where: {
@@ -61,11 +60,23 @@ async function DashboardContent() {
       },
       include: { loan: { include: { investor: true } } },
     }),
-    // 👈 FETCH LOCKED TARGET
     prisma.expectedCycleTarget.findUnique({
       where: { month_year: { month: cycleMonth, year: cycleYear } }
     })
   ]);
+
+  // 👈 FETCH THIS MONTH'S PROFIT DISTRIBUTIONS
+  const thisMonthCycle = await prisma.monthlyCycle.findFirst({
+    where: {
+      cycleStart: { gte: startOfCycle, lte: endOfCycle }
+    },
+    include: {
+      distributions: {
+        include: { investor: true }
+      }
+    },
+    orderBy: { cycleStart: "desc" }
+  });
 
   const totalTeamRegularInvestment = investors.reduce((sum, inv) => sum + inv.investments.reduce((s, i) => s + i.amount, 0), 0);
   const totalTeamProfit = investors.reduce((sum, inv) => sum + inv.profitDistributions.reduce((s, p) => s + p.shareAmount, 0), 0);
@@ -80,22 +91,16 @@ async function DashboardContent() {
 
   const unspentAmount = adminRound(totalInvestment - totalWithdrawn - activeLoanPrincipal);
 
-  // CALCULATE CURRENT REAL-TIME EXPECTED
   let currentExpectedEMI = 0;
   expectedSchedules.forEach(sch => { currentExpectedEMI += (sch.termAmount + sch.interestAmount); });
 
   const activeInvestorsCount = investors.filter(i => i.status === "active").length;
-  const currentExpectedInv = activeInvestorsCount * 1000; // Assuming all will pay
+  const currentExpectedInv = activeInvestorsCount * 1000;
 
-  // 👈 USE LOCKED TARGET IF IT EXISTS
   const displayEMI = lockedTarget ? lockedTarget.emiTarget : currentExpectedEMI;
   const displayInv = lockedTarget ? lockedTarget.invTarget : currentExpectedInv;
   const displayExtra = lockedTarget ? lockedTarget.extraTarget : 0;
   const displayTotal = lockedTarget ? lockedTarget.totalTarget : (displayEMI + displayInv + displayExtra);
-
-  const thisMonthDistributions = currentCycles.filter(
-    d => new Date(d.cycle.cycleStart).getMonth() === cycleMonth && new Date(d.cycle.cycleStart).getFullYear() === cycleYear
-  );
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
@@ -119,8 +124,8 @@ async function DashboardContent() {
         </div>
       </div>
 
+      {/* DASHBOARD CARDS... (Keep your existing cards here) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-        {/* ... (Keep your existing 5 cards here: Total Inv, Regular Inv, Profit, Unspent, Active Loans) ... */}
         <Link href="/dashboard/total-investment" className="block bg-white p-5 rounded-lg shadow-sm border-t-4 border-green-500 hover:scale-[1.02] transition-transform cursor-pointer">
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
           <p className="text-2xl md:text-3xl font-bold text-gray-800 mt-2">₹{totalInvestment.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
@@ -151,7 +156,7 @@ async function DashboardContent() {
           <p className="text-xs text-gray-400 mt-2">Outstanding Principal</p>
         </div>
 
-        {/* 👈 LOCKED EXPECTED TARGET CARD */}
+        {/* LOCKED EXPECTED TARGET CARD */}
         <div className="bg-teal-50 p-5 rounded-lg shadow-sm border border-teal-200 sm:col-span-2 relative">
           <div className="flex justify-between items-center">
             <p className="text-sm font-bold text-teal-800">Expected Collection (10th to 9th)</p>
@@ -167,48 +172,72 @@ async function DashboardContent() {
             <div className="flex justify-between"><span>Extra Expected:</span> <span className="font-bold">₹{displayExtra.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
           </div>
 
-          {/* Lock Button Component */}
           <LockExpectedAmount 
-	    isLocked={!!lockedTarget}
+            isLocked={!!lockedTarget}
             currentEMI={currentExpectedEMI}
             currentInv={currentExpectedInv}
-            initialExtra={displayExtra}          />
+            initialExtra={displayExtra}
+          />
         </div>
       </div>
 
-      {/* Keep your existing breakdown tables and profit distributions below */}
+      {/* 👈 NEW: THIS MONTH'S DISTRIBUTION FOR ALL INVESTORS */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-5 border-b bg-gray-50 flex justify-between items-center">
-          <h2 className="text-lg font-bold text-gray-800">Recent Profit Distributions</h2>
+          <h2 className="text-lg font-bold text-gray-800">This Month's Profit Distribution</h2>
           <Link href="/profits" className="text-sm text-blue-600 hover:underline font-medium">Manage Cycles</Link>
         </div>
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 text-gray-600 font-medium">
-            <tr>
-              <th className="px-6 py-4">Investor</th>
-              <th className="px-6 py-4">Date</th>
-              <th className="px-6 py-4 text-right">Profit Credited</th>
-            </tr>
-          </thead>
-          <tbody>
-            {thisMonthDistributions.map((dist) => (
-              <tr key={dist.id} className="border-t hover:bg-gray-50">
-                <td className="px-6 py-4 font-medium text-gray-800">
-                  <Link href={`/investors/${dist.investorId}`} className="hover:text-blue-600">{dist.investor.name}</Link>
-                </td>
-                <td className="px-6 py-4 text-gray-500">
-                  {new Date(dist.cycle.distributedAt || dist.cycle.cycleStart).toLocaleDateString("en-IN")}
-                </td>
-                <td className="px-6 py-4 text-right font-bold text-green-600">
-                  +₹{dist.shareAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
-              </tr>
-            ))}
-            {thisMonthDistributions.length === 0 && (
-              <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-500">No profit distributed this month yet.</td></tr>
-            )}
-          </tbody>
-        </table>
+        
+        {thisMonthCycle ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-gray-50 text-gray-600 font-medium border-b">
+                <tr>
+                  <th className="px-6 py-4">Investor Name</th>
+                  <th className="px-6 py-4 text-right">Balance Used</th>
+                  <th className="px-6 py-4 text-right">Profit Credited</th>
+                  <th className="px-6 py-4 text-center">Date Paid</th>
+                </tr>
+              </thead>
+              <tbody>
+                {thisMonthCycle.distributions.map((dist) => (
+                  <tr key={dist.id} className="border-t hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-800">
+                      <Link href={`/investors/${dist.investorId}`} className="hover:text-blue-600">
+                        {dist.investor.name}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4 text-right text-gray-500">
+                      ₹{dist.balanceUsed.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-6 py-4 text-right font-bold text-green-600">
+                      +₹{dist.shareAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-6 py-4 text-center text-gray-500">
+                      {dist.paidDate ? new Date(dist.paidDate).toLocaleDateString("en-IN") : "N/A"}
+                    </td>
+                  </tr>
+                ))}
+                {thisMonthCycle.distributions.length === 0 && (
+                  <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-500">No distributions made for this cycle yet.</td></tr>
+                )}
+              </tbody>
+              <tfoot>
+                <tr className="bg-gray-50 border-t-2 border-black">
+                  <td colSpan={2} className="px-6 py-4 text-right font-bold">Total Distributed:</td>
+                  <td className="px-6 py-4 text-right font-bold text-green-700 text-lg">
+                    ₹{thisMonthCycle.distributions.reduce((sum, d) => sum + d.shareAmount, 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        ) : (
+          <div className="p-8 text-center text-gray-500">
+            No profit cycle active for this month (10th to 9th).
+          </div>
+        )}
       </div>
     </div>
   );
