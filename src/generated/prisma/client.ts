@@ -96,3 +96,8 @@ export type AuditLog = Prisma.AuditLogModel
  * 
  */
 export type ExpectedIncome = Prisma.ExpectedIncomeModel
+/**
+ * Model ExpectedCycleTarget
+ * 
+ */
+export type ExpectedCycleTarget = Prisma.ExpectedCycleTargetModel

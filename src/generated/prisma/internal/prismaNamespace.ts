@@ -407,7 +407,8 @@ export const ModelName = {
   MonthlyCycle: 'MonthlyCycle',
   ProfitDistribution: 'ProfitDistribution',
   AuditLog: 'AuditLog',
-  ExpectedIncome: 'ExpectedIncome'
+  ExpectedIncome: 'ExpectedIncome',
+  ExpectedCycleTarget: 'ExpectedCycleTarget'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -423,7 +424,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "investor" | "investment" | "withdrawal" | "loan" | "loanSchedule" | "repayment" | "monthlyCycle" | "profitDistribution" | "auditLog" | "expectedIncome"
+    modelProps: "user" | "investor" | "investment" | "withdrawal" | "loan" | "loanSchedule" | "repayment" | "monthlyCycle" | "profitDistribution" | "auditLog" | "expectedIncome" | "expectedCycleTarget"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1241,6 +1242,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ExpectedCycleTarget: {
+      payload: Prisma.$ExpectedCycleTargetPayload<ExtArgs>
+      fields: Prisma.ExpectedCycleTargetFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ExpectedCycleTargetFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedCycleTargetPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ExpectedCycleTargetFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedCycleTargetPayload>
+        }
+        findFirst: {
+          args: Prisma.ExpectedCycleTargetFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedCycleTargetPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ExpectedCycleTargetFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedCycleTargetPayload>
+        }
+        findMany: {
+          args: Prisma.ExpectedCycleTargetFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedCycleTargetPayload>[]
+        }
+        create: {
+          args: Prisma.ExpectedCycleTargetCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedCycleTargetPayload>
+        }
+        createMany: {
+          args: Prisma.ExpectedCycleTargetCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ExpectedCycleTargetCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedCycleTargetPayload>[]
+        }
+        delete: {
+          args: Prisma.ExpectedCycleTargetDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedCycleTargetPayload>
+        }
+        update: {
+          args: Prisma.ExpectedCycleTargetUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedCycleTargetPayload>
+        }
+        deleteMany: {
+          args: Prisma.ExpectedCycleTargetDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ExpectedCycleTargetUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ExpectedCycleTargetUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedCycleTargetPayload>[]
+        }
+        upsert: {
+          args: Prisma.ExpectedCycleTargetUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExpectedCycleTargetPayload>
+        }
+        aggregate: {
+          args: Prisma.ExpectedCycleTargetAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateExpectedCycleTarget>
+        }
+        groupBy: {
+          args: Prisma.ExpectedCycleTargetGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExpectedCycleTargetGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ExpectedCycleTargetCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExpectedCycleTargetCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1443,6 +1518,21 @@ export const ExpectedIncomeScalarFieldEnum = {
 } as const
 
 export type ExpectedIncomeScalarFieldEnum = (typeof ExpectedIncomeScalarFieldEnum)[keyof typeof ExpectedIncomeScalarFieldEnum]
+
+
+export const ExpectedCycleTargetScalarFieldEnum = {
+  id: 'id',
+  month: 'month',
+  year: 'year',
+  emiTarget: 'emiTarget',
+  invTarget: 'invTarget',
+  extraTarget: 'extraTarget',
+  totalTarget: 'totalTarget',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ExpectedCycleTargetScalarFieldEnum = (typeof ExpectedCycleTargetScalarFieldEnum)[keyof typeof ExpectedCycleTargetScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1699,6 +1789,7 @@ export type GlobalOmitConfig = {
   profitDistribution?: Prisma.ProfitDistributionOmit
   auditLog?: Prisma.AuditLogOmit
   expectedIncome?: Prisma.ExpectedIncomeOmit
+  expectedCycleTarget?: Prisma.ExpectedCycleTargetOmit
 }
 
 /* Types for Logging */

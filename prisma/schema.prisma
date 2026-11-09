@@ -163,3 +163,16 @@ model ExpectedIncome {
   
   @@unique([month, year])
 }
+model ExpectedCycleTarget {
+  id        String   @id @default(cuid())
+  month     Int
+  year      Int
+  emiTarget Float    @default(0)
+  invTarget Float    @default(0)
+  extraTarget Float  @default(0)
+  totalTarget Float  @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([month, year])
+}

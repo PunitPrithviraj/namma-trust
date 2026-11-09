@@ -61,7 +61,8 @@ export const ModelName = {
   MonthlyCycle: 'MonthlyCycle',
   ProfitDistribution: 'ProfitDistribution',
   AuditLog: 'AuditLog',
-  ExpectedIncome: 'ExpectedIncome'
+  ExpectedIncome: 'ExpectedIncome',
+  ExpectedCycleTarget: 'ExpectedCycleTarget'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -243,6 +244,21 @@ export const ExpectedIncomeScalarFieldEnum = {
 } as const
 
 export type ExpectedIncomeScalarFieldEnum = (typeof ExpectedIncomeScalarFieldEnum)[keyof typeof ExpectedIncomeScalarFieldEnum]
+
+
+export const ExpectedCycleTargetScalarFieldEnum = {
+  id: 'id',
+  month: 'month',
+  year: 'year',
+  emiTarget: 'emiTarget',
+  invTarget: 'invTarget',
+  extraTarget: 'extraTarget',
+  totalTarget: 'totalTarget',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ExpectedCycleTargetScalarFieldEnum = (typeof ExpectedCycleTargetScalarFieldEnum)[keyof typeof ExpectedCycleTargetScalarFieldEnum]
 
 
 export const SortOrder = {

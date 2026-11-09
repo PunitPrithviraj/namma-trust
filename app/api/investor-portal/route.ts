@@ -19,15 +19,24 @@ export async function GET() {
   }
 
   const investorId = user.investor.id;
-
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
+  
+  // CYCLE LOGIC: 10th to 9th
+  const startOfCycle = new Date(now.getFullYear(), now.getMonth(), 10, 0, 0, 0);
+  const endOfCycle = new Date(now.getFullYear(), now.getMonth() + 1, 9, 23, 59, 59);
+  if (now.getDate() < 10) {
+    startOfCycle.setMonth(startOfCycle.getMonth() - 1);
+    endOfCycle.setMonth(endOfCycle.getMonth() - 1);
+  }
 
-  const [investorData, allInvestments, allWithdrawals, allProfit, activeLoans, expectedSchedules, extraIncomeRecord, activeInvestorCount] = await Promise.all([
-    // 1. Individual Data
+  let cycleMonth = now.getMonth();
+  let cycleYear = now.getFullYear();
+  if (now.getDate() < 10) {
+    cycleMonth -= 1;
+    if (cycleMonth < 0) { cycleMonth = 11; cycleYear -= 1; }
+  }
+
+  const [investorData, allInvestments, allWithdrawals, allProfit, activeLoans, lockedTarget] = await Promise.all([
     prisma.investor.findUnique({
       where: { id: investorId },
       include: {
@@ -37,20 +46,14 @@ export async function GET() {
         loans: { include: { schedule: true } },
       },
     }),
-    // 2. Trust-Wide Cash In
     prisma.investment.aggregate({ _sum: { amount: true } }),
     prisma.withdrawal.aggregate({ _sum: { amount: true } }),
     prisma.profitDistribution.aggregate({ _sum: { shareAmount: true } }),
-    // 3. Trust-Wide Active Loans
     prisma.loan.findMany({ where: { status: "active" }, include: { schedule: true } }),
-    // 4. Expected EMI (Due this month)
-    prisma.loanSchedule.findMany({
-      where: { status: "pending", dueDate: { gte: startOfMonth, lte: endOfMonth }, loan: { status: "active" } }
-    }),
-    // 5. Extra Expected Amount
-    prisma.expectedIncome.findUnique({ where: { month_year: { month: currentMonth, year: currentYear } } }),
-    // 6. Active Investor Count
-    prisma.investor.count({ where: { status: "active" } })
+    // 👈 FETCH LOCKED TARGET
+    prisma.expectedCycleTarget.findUnique({
+      where: { month_year: { month: cycleMonth, year: cycleYear } }
+    })
   ]);
 
   let totalOutstanding = 0;
@@ -62,24 +65,31 @@ export async function GET() {
   const totalCashIn = (allInvestments._sum.amount || 0) + (allProfit._sum.shareAmount || 0);
   const totalCashOut = (allWithdrawals._sum.amount || 0) + totalOutstanding;
   const trustUnspentAmount = Math.max(0, totalCashIn - totalCashOut);
+  
+  const activeInvestorCount = await prisma.investor.count({ where: { status: "active" } });
   const investorUnspentShare = activeInvestorCount > 0 ? trustUnspentAmount / activeInvestorCount : 0;
 
-  // 👈 Calculate Expected Trust Amounts
-  let trustExpectedEMI = 0;
-  expectedSchedules.forEach(sch => { trustExpectedEMI += (sch.termAmount + sch.interestAmount); });
-  const trustMonthly1000 = activeInvestorCount * 1000;
-  const trustExtraExpected = extraIncomeRecord?.amount || 0;
-  const trustGrandTotalExpected = trustExpectedEMI + trustMonthly1000 + trustExtraExpected;
+  // 👈 IF LOCKED TARGET EXISTS, USE IT. OTHERWISE SHOW 0
+  let trustExpected = {
+    emi: 0,
+    monthly1000: 0,
+    extra: 0,
+    grandTotal: 0
+  };
+
+  if (lockedTarget) {
+    trustExpected = {
+      emi: lockedTarget.emiTarget,
+      monthly1000: lockedTarget.invTarget,
+      extra: lockedTarget.extraTarget,
+      grandTotal: lockedTarget.totalTarget
+    };
+  }
 
   return NextResponse.json({
     ...investorData,
     trustUnspentAmount,
     investorUnspentShare,
-    trustExpected: {
-      emi: trustExpectedEMI,
-      monthly1000: trustMonthly1000,
-      extra: trustExtraExpected,
-      grandTotal: trustGrandTotalExpected,
-    }
+    trustExpected
   });
 }

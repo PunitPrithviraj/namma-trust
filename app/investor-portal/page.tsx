@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -126,6 +125,8 @@ export default function InvestorPortal() {
     }`;
   };
 
+  const hasLockedTarget = data.trustExpected && data.trustExpected.grandTotal > 0;
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 print:hidden">
@@ -192,43 +193,54 @@ export default function InvestorPortal() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8 print:hidden">
         <Link href="/investor-portal/invested-amount" className="block bg-white p-5 rounded-lg shadow-sm border-t-4 border-green-500 hover:scale-[1.02] transition-transform cursor-pointer">
           <p className="text-sm font-medium text-gray-500">Invested Amount</p>
-          <p className="text-2xl font-bold text-green-700 mt-2">₹{investedAmount.toLocaleString("en-IN")}</p>
+          <p className="text-2xl font-bold text-green-700 mt-2">₹{investedAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           <p className="text-xs text-blue-500 mt-1 font-medium">View History &rarr;</p>
         </Link>
 
         <Link href="/investor-portal/total-investment" className="block bg-white p-5 rounded-lg shadow-sm border-t-4 border-blue-500 hover:scale-[1.02] transition-transform cursor-pointer">
           <p className="text-sm font-medium text-gray-500">Total Investment</p>
-          <p className="text-2xl font-bold text-blue-700 mt-2">₹{currentBalance.toLocaleString("en-IN")}</p>
+          <p className="text-2xl font-bold text-blue-700 mt-2">₹{currentBalance.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           <p className="text-xs text-blue-500 mt-1 font-medium">View History &rarr;</p>
         </Link>
         
         <Link href="/investor-portal/total-profit" className="block bg-white p-5 rounded-lg shadow-sm border-t-4 border-purple-500 hover:scale-[1.02] transition-transform cursor-pointer">
           <p className="text-sm font-medium text-gray-500">Total Profit</p>
-          <p className="text-2xl font-bold text-purple-700 mt-2">₹{totalProfit.toLocaleString("en-IN")}</p>
+          <p className="text-2xl font-bold text-purple-700 mt-2">₹{totalProfit.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           <p className="text-xs text-blue-500 mt-1 font-medium">View History &rarr;</p>
         </Link>
         
         <Link href="/investor-portal/active-loan" className="block bg-white p-5 rounded-lg shadow-sm border-t-4 border-red-500 hover:scale-[1.02] transition-transform cursor-pointer">
           <p className="text-sm font-medium text-gray-500">Your Active Loan</p>
-          <p className="text-2xl font-bold text-red-600 mt-2">₹{outstandingLoan.toLocaleString("en-IN")}</p>
+          <p className="text-2xl font-bold text-red-600 mt-2">₹{outstandingLoan.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           <p className="text-xs text-blue-500 mt-1 font-medium">View Details &rarr;</p>
         </Link>
 
         <div className="bg-orange-50 p-5 rounded-lg shadow-sm border border-orange-200">
           <p className="text-sm font-medium text-orange-700">Your Unspent Share</p>
-          <p className="text-2xl font-bold text-orange-800 mt-2">₹{investorUnspentShare.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</p>
+          <p className="text-2xl font-bold text-orange-800 mt-2">₹{investorUnspentShare.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           <p className="text-xs text-orange-600 mt-1">Available in trust</p>
         </div>
 
-        {/* 👈 NEW CARD: EXPECTED TRUST COLLECTION */}
+        {/* 👈 UPDATED CARD: LOCKED TRUST COLLECTION */}
         <div className="bg-teal-50 p-5 rounded-lg shadow-sm border border-teal-200 md:col-span-1 sm:col-span-2">
-          <p className="text-sm font-bold text-teal-800">Expected Trust Collection</p>
-          <p className="text-2xl font-bold text-teal-700 mt-2">₹{data.trustExpected?.grandTotal.toLocaleString("en-IN") || 0}</p>
-          <div className="mt-2 text-xs text-teal-700 space-y-1">
-            <div className="flex justify-between"><span>EMI Due:</span> <span>₹{data.trustExpected?.emi.toLocaleString("en-IN") || 0}</span></div>
-            <div className="flex justify-between"><span>Monthly ₹1k:</span> <span>₹{data.trustExpected?.monthly1000.toLocaleString("en-IN") || 0}</span></div>
-            <div className="flex justify-between"><span>Extra:</span> <span>₹{data.trustExpected?.extra.toLocaleString("en-IN") || 0}</span></div>
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-sm font-bold text-teal-800">Expected Trust Collection</p>
+            {hasLockedTarget ? (
+              <span className="text-[10px] bg-teal-600 text-white px-1.5 py-0.5 rounded font-bold">TARGET</span>
+            ) : (
+              <span className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-bold">NOT LOCKED</span>
+            )}
           </div>
+          
+          <p className="text-2xl font-bold text-teal-700 mt-2">₹{(data.trustExpected?.grandTotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          
+          {hasLockedTarget && (
+            <div className="mt-2 text-xs text-teal-700 space-y-1">
+              <div className="flex justify-between"><span>EMI Due:</span> <span>₹{data.trustExpected.emi.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+              <div className="flex justify-between"><span>Monthly ₹1k:</span> <span>₹{data.trustExpected.monthly1000.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+              <div className="flex justify-between"><span>Extra:</span> <span>₹{data.trustExpected.extra.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -249,7 +261,7 @@ export default function InvestorPortal() {
               {data.loans.sort((a:any, b:any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((loan: any) => (
                 <tr key={loan.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-3 text-gray-600">{new Date(loan.createdAt).toLocaleDateString("en-IN")}</td>
-                  <td className="px-4 py-3 font-bold text-blue-600">₹{loan.principalAmount.toLocaleString("en-IN")}</td>
+                  <td className="px-4 py-3 font-bold text-blue-600">₹{loan.principalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   <td className="px-4 py-3 text-gray-600">{loan.notes?.replace("REQUEST: ", "") || "N/A"}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 rounded text-xs font-bold ${
@@ -294,7 +306,7 @@ export default function InvestorPortal() {
               <tr key={inv.id} className="border-b">
                 <td className="px-4 py-3">{new Date(inv.date).toLocaleDateString("en-IN")}</td>
                 <td className="px-4 py-3 uppercase text-xs font-bold">{inv.type}</td>
-                <td className="px-4 py-3 text-right text-green-600 font-medium">+₹{inv.amount.toLocaleString("en-IN")}</td>
+                <td className="px-4 py-3 text-right text-green-600 font-medium">+₹{inv.amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
             ))}
           </tbody>
@@ -315,15 +327,15 @@ export default function InvestorPortal() {
             {data.profitDistributions.map((pd: any) => (
               <tr key={pd.id} className="border-b">
                 <td className="px-4 py-3">{new Date(pd.cycle.cycleStart).toLocaleDateString("en-IN", { month: 'long', year: 'numeric' })}</td>
-                <td className="px-4 py-3 text-right text-gray-500">₹{pd.balanceUsed.toLocaleString("en-IN")}</td>
-                <td className="px-4 py-3 text-right font-bold text-green-600 bg-yellow-50 print:bg-white">+₹{pd.shareAmount.toLocaleString("en-IN")}</td>
+                <td className="px-4 py-3 text-right text-gray-500">₹{pd.balanceUsed.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td className="px-4 py-3 text-right font-bold text-green-600 bg-yellow-50 print:bg-white">+₹{pd.shareAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr className="bg-yellow-100 print:bg-white border-t-2 border-black">
               <td colSpan={2} className="px-4 py-3 text-right font-bold">Total Profit Earned:</td>
-              <td className="px-4 py-3 text-right font-bold text-green-700 text-lg">₹{totalProfit.toLocaleString("en-IN")}</td>
+              <td className="px-4 py-3 text-right font-bold text-green-700 text-lg">₹{totalProfit.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             </tr>
           </tfoot>
         </table>
