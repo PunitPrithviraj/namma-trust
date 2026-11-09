@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next"; // 👈 Added Viewport here
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -15,6 +15,14 @@ export const metadata: Metadata = {
   themeColor: "#1e3a8a",
 };
 
+// 👈 ADD THIS VIEWPORT EXPORT
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export default async function RootLayout({
   children,
 }: {
@@ -29,8 +37,6 @@ export default async function RootLayout({
           <Navbar />
           {children}
         </SessionProviderWrapper>
-        
-        {/* 👈 SERVICE WORKER SCRIPT ADDED HERE */}
         <script src="/register-sw.js" defer></script>
       </body>
     </html>

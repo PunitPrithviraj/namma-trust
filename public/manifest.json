@@ -5,7 +5,7 @@
   "description": "Namma Trust Financial App",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#1e3a8a",
   "icons": [
@@ -20,22 +20,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/logo.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Namma Trust Dashboard"
-    },
-    {
-      "src": "/logo.png",
-      "sizes": "720x1280",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Namma Trust Mobile View"
     }
   ]
 }
