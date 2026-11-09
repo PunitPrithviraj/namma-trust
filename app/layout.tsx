@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import AuthProvider from "@/components/AuthProvider"; // 👈 Ensure this exists in your project
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import SessionProviderWrapper from "@/components/SessionProviderWrapper"; // 👈 We need a small client wrapper
 
 const inter = Inter({ subsets: ["latin"] });
 
-// 👈 ADDED METADATA FOR PWA / APK
 export const metadata: Metadata = {
   title: "Namma Trust",
   description: "Namma Trust Financial Management App",
@@ -14,18 +15,20 @@ export const metadata: Metadata = {
   themeColor: "#1e3a8a",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>
+        <SessionProviderWrapper session={session}>
           <Navbar />
           {children}
-        </AuthProvider>
+        </SessionProviderWrapper>
       </body>
     </html>
   );
