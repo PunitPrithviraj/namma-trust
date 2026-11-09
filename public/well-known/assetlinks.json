@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.namma_trust_zeta.twa",
+        "sha256_cert_fingerprints": ["4D:3D:A8:7F:3A:CD:D1:3B:DC:47:91:48:3D:72:02:31:A2:A5:69:E7:92:82:19:DF:66:ED:68:F0:01:54:96:73"]
+      }
+    }]
