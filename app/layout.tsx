@@ -4,7 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import SessionProviderWrapper from "@/components/SessionProviderWrapper"; // 👈 We need a small client wrapper
+import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,6 +29,9 @@ export default async function RootLayout({
           <Navbar />
           {children}
         </SessionProviderWrapper>
+        
+        {/* 👈 SERVICE WORKER SCRIPT ADDED HERE */}
+        <script src="/register-sw.js" defer></script>
       </body>
     </html>
   );
