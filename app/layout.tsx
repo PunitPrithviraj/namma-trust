@@ -1,33 +1,18 @@
-"use client";
-
-import { Suspense } from "react"; // <-- IMPORT SUSPENSE
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import "./print.css"; 
 import Navbar from "@/components/Navbar";
-import { SessionProvider, useSession } from "next-auth/react";
-import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import AuthProvider from "@/components/AuthProvider"; // 👈 Ensure this exists in your project
 
 const inter = Inter({ subsets: ["latin"] });
 
-function ForcePasswordGuard({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  useEffect(() => {
-    if (status === "authenticated" && session?.user) {
-      const needsReset = (session.user as any).forcePasswordReset;
-      
-      if (needsReset && pathname !== "/change-password") {
-        router.push("/change-password");
-      }
-    }
-  }, [session, status, router, pathname]);
-
-  return <>{children}</>;
-}
+// 👈 ADDED METADATA FOR PWA / APK
+export const metadata: Metadata = {
+  title: "Namma Trust",
+  description: "Namma Trust Financial Management App",
+  manifest: "/manifest.json",
+  themeColor: "#1e3a8a",
+};
 
 export default function RootLayout({
   children,
@@ -36,18 +21,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-gray-50 min-h-screen`}>
-        <SessionProvider>
-          {/* WRAP THE GUARD IN SUSPENSE */}
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-            <ForcePasswordGuard>
-              <Navbar />
-              <main>
-                {children}
-              </main>
-            </ForcePasswordGuard>
-          </Suspense>
-        </SessionProvider>
+      <body className={inter.className}>
+        <AuthProvider>
+          <Navbar />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
