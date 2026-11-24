@@ -4,7 +4,7 @@ import { signIn, getSession } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Eye, EyeOff, Download } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");
@@ -113,18 +113,6 @@ export default function LoginPage() {
         <p className="text-xs text-gray-500 mt-6 text-center">
           Forgot password? Contact your trust admin.
         </p>
-
-        {/* 👈 DOWNLOAD LINK ON LOGIN PAGE */}
-        <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-          <a 
-            href="/namma-trust.apk" 
-            download
-            className="inline-flex items-center gap-2 text-sm font-bold text-green-600 hover:text-green-700 bg-green-50 px-4 py-2 rounded-lg transition-colors"
-          >
-            <Download className="w-4 h-4" /> Download Android App
-          </a>
-        </div>
-
       </form>
     </div>
   );
