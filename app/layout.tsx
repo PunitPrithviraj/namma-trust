@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next"; // 👈 Added Viewport here
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -15,12 +15,11 @@ export const metadata: Metadata = {
   themeColor: "#1e3a8a",
 };
 
-// 👈 ADD THIS VIEWPORT EXPORT
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default async function RootLayout({
@@ -32,7 +31,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} min-h-screen overflow-x-hidden`}>
         <SessionProviderWrapper session={session}>
           <Navbar />
           {children}

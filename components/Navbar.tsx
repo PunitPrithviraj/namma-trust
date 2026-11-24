@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { 
   LayoutDashboard, Users2, Banknote, TrendingUp, ScrollText, 
@@ -14,6 +14,14 @@ export default function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  // 👈 CHECK IF RUNNING AS INSTALLED APP
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+      setIsInstalled(true);
+    }
+  }, []);
 
   const isAdmin = (session?.user as any)?.role === "admin";
   const isInvestor = (session?.user as any)?.role === "investor";
@@ -67,14 +75,16 @@ export default function Navbar() {
             <Link href="/account/password" className={getLinkClass("/account/password")}><KeyRound className="w-3.5 h-3.5" /> Password</Link>
             {isAdmin && <Link href="/admin/passwords" className={getLinkClass("/admin/passwords")}><ShieldCheck className="w-3.5 h-3.5" /> Manage</Link>}
 
-            {/* 👈 DOWNLOAD APP BUTTON */}
-            <a 
-              href="/namma-trust.apk" 
-              download
-              className="ml-2 bg-green-50 text-green-700 px-2.5 py-1.5 rounded-md flex items-center gap-1 text-xs font-semibold hover:bg-green-100 transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" /> App
-            </a>
+            {/* 👈 HIDE DOWNLOAD BUTTON IF INSTALLED */}
+            {!isInstalled && (
+              <a 
+                href="/namma-trust.apk" 
+                download
+                className="ml-2 bg-green-50 text-green-700 px-2.5 py-1.5 rounded-md flex items-center gap-1 text-xs font-semibold hover:bg-green-100 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" /> App
+              </a>
+            )}
 
             <button onClick={() => signOut({ callbackUrl: "/login" })} className="ml-2 bg-red-50 text-red-600 px-2.5 py-1.5 rounded-md flex items-center gap-1 text-xs font-semibold hover:bg-red-100 transition-colors">
               <LogOut className="w-3.5 h-3.5" /> Logout
@@ -106,14 +116,16 @@ export default function Navbar() {
           <Link href="/account/password" onClick={() => setIsOpen(false)} className={getLinkClass("/account/password", true)}>Change Password</Link>
           {isAdmin && <Link href="/admin/passwords" onClick={() => setIsOpen(false)} className={getLinkClass("/admin/passwords", true)}>Manage Passwords</Link>}
 
-          {/* 👈 DOWNLOAD APP BUTTON (MOBILE) */}
-          <a 
-            href="/namma-trust.apk" 
-            download
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-green-700 bg-green-50 font-medium mt-2"
-          >
-            <Download className="w-5 h-5" /> Download App
-          </a>
+          {/* 👈 HIDE MOBILE DOWNLOAD BUTTON IF INSTALLED */}
+          {!isInstalled && (
+            <a 
+              href="/namma-trust.apk" 
+              download
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-green-700 bg-green-50 font-medium mt-2"
+            >
+              <Download className="w-5 h-5" /> Download App
+            </a>
+          )}
 
           <button onClick={() => signOut({ callbackUrl: "/login" })} className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-red-600 hover:bg-red-50 font-medium mt-2">
             <LogOut className="w-5 h-5" /> Logout

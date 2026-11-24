@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Share2, ChevronDown } from "lucide-react";
 
-// 👈 ACCEPT PROPS FOR REAL DATA
 interface ShareProps {
   expectedEMI: number;
   monthly1000: number;
@@ -23,7 +22,8 @@ export default function AdminShareCenter({ expectedEMI, monthly1000, extraExpect
         if (Array.isArray(data)) {
           setPendingLoans(data.filter((l) => l.status === "requested"));
         }
-      });
+      })
+      .catch((err) => console.error("Failed to load loans:", err));
   }, []);
 
   useEffect(() => {
@@ -35,6 +35,9 @@ export default function AdminShareCenter({ expectedEMI, monthly1000, extraExpect
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const formatAmount = (amt: number) =>
+    amt.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const shareMessage = (type: string) => {
     let text = "";
@@ -51,8 +54,7 @@ export default function AdminShareCenter({ expectedEMI, monthly1000, extraExpect
         text = `*Loan Approved* ✅\n\nA new loan has been successfully sanctioned and disbursed from the Trust. The EMI schedule has been generated and sent to the borrower.\n\n_Note: Check the Investor Portal for the latest active loans and schedules._`;
         break;
       case "expected":
-        // 👈 INJECT REAL DATA HERE
-        text = `*Namma Trust - Monthly Expected Collection* 💰\n\nAs we progress through *${dateStr}*, here is the expected collection summary for the Trust:\n\n• Expected EMIs (Loans): *₹${expectedEMI.toLocaleString("en-IN")}*\n• Monthly ₹1,000 Investments: *₹${monthly1000.toLocaleString("en-IN")}*\n• Other Extra Collections: *₹${extraExpected.toLocaleString("en-IN")}*\n\n*Total Expected:* *₹${grandTotal.toLocaleString("en-IN")}*\n\nLet's ensure all dues are cleared on time to keep our Trust financially strong!`;
+        text = `*Namma Trust - Monthly Expected Collection* 💰\n\nAs we progress through *${dateStr}*, here is the expected collection summary for the Trust:\n\n• Expected EMIs (Loans): *₹${formatAmount(expectedEMI)}*\n• Monthly ₹1,000 Investments: *₹${formatAmount(monthly1000)}*\n• Other Extra Collections: *₹${formatAmount(extraExpected)}*\n\n*Total Expected:* *₹${formatAmount(grandTotal)}*\n\nLet's ensure all dues are cleared on time to keep our Trust financially strong!`;
         break;
       case "loan_requests":
         if (pendingLoans.length === 0) {
@@ -61,7 +63,7 @@ export default function AdminShareCenter({ expectedEMI, monthly1000, extraExpect
           text = `*Namma Trust - Pending Loan Requests* ⏳\n\n`;
           pendingLoans.forEach((req, index) => {
             text += `${index + 1}. *${req.investor.name}*\n`;
-            text += `   Amount: ₹${req.principalAmount.toLocaleString("en-IN")}\n`;
+            text += `   Amount: ₹${formatAmount(req.principalAmount)}\n`;
             text += `   Purpose: ${req.notes?.replace("REQUEST: ", "") || "N/A"}\n\n`;
           });
           text += `_Please contact the Admin for approval._`;
@@ -76,19 +78,19 @@ export default function AdminShareCenter({ expectedEMI, monthly1000, extraExpect
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-[#25D366] text-white px-4 py-2 rounded hover:bg-[#1EBE5D] font-medium flex items-center gap-2 shadow-sm transition-colors"
+        className="bg-[#25D366] text-white px-3 sm:px-4 py-2 rounded hover:bg-[#1EBE5D] font-medium flex items-center justify-center gap-1 sm:gap-2 shadow-sm transition-colors text-sm"
       >
-        <Share2 className="w-4 h-4" /> Share Updates <ChevronDown className="w-3 h-3" />
+        <Share2 className="w-4 h-4" /> Share <ChevronDown className="w-3 h-3" />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden max-sm:fixed max-sm:inset-x-3 max-sm:top-20 max-sm:w-auto">
           <div className="p-3 border-b bg-gray-50 text-xs font-bold text-gray-600 uppercase tracking-wider">
             Select Message Type
           </div>
-          
+
           <button onClick={() => shareMessage("loan_requests")} className="w-full text-left px-4 py-3 hover:bg-green-50 flex flex-col gap-1 border-b transition-colors">
             <div className="flex items-center justify-between w-full">
               <span className="text-sm font-bold text-gray-800">Loan Requests</span>
